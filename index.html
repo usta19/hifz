@@ -9,6 +9,13 @@
 <meta name="apple-mobile-web-app-title" content="Hıfz">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#174a3c">
+<style>
+html,body{margin:0}
+:root{padding-top:env(safe-area-inset-top,0px)}
+body{font-size:14px;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--bg,#f6f3ea);z-index:10}
+img{max-width:100%}[hidden]{display:none!important}
+</style>
 <script>if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")){addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}</script>
 </head><body>
@@ -934,7 +941,7 @@ const docKeyOfDay = d => "d-" + d.slice(0, 7);
 function mark(...keys){ keys.forEach(k => { dirty.add(k); if (k.startsWith("tip-")) tipSave(k.slice(4)); }); persist(); }
 function markDay(d){ mark(docKeyOfDay(d)); }
 function bundle(k){
-  if (k === "core") return { settings: S.settings, plan: S.plan, planHist: S.planHist, weeks: S.weeks, quiz: S.quiz.slice(-300), bm: S.bm, muk: S.muk || null, share: !!S.share, shareName: S.shareName || "", imp: (S.imp || []).slice(-500), goals: S.goals || null, cardNew: S.cardNew || null, telafi: S.telafi || null, gen: S.gen || null, light: S.light || null, odevDone: S.odevDone || {}, ver: S.ver || {} };
+  if (k === "core") return { settings: S.settings, plan: S.plan, planHist: S.planHist, weeks: S.weeks, quiz: S.quiz.slice(-300), bm: S.bm, muk: S.muk || null, share: !!S.share, shareName: S.shareName || "", imp: (S.imp || []).slice(-500), goals: S.goals || null, cardNew: S.cardNew || null, telafi: S.telafi || null, gen: S.gen || null, remind: S.remind || null, whoNames: S.whoNames || [], light: S.light || null, odevDone: S.odevDone || {}, ver: S.ver || {} };
   if (k === "srs") return S.srs;
   if (k === "recs") return S.recCloud || {};
   if (k.startsWith("tip-")) return S.tips[k.slice(4)] || null;
@@ -1550,9 +1557,9 @@ function vUlumRehber(){
 /* ===== Kendini dinle: ses kaydı ve takip ===== */
 let AUDIO = null;
 function idb(){ return new Promise((res, rej) => { try { const r = indexedDB.open("hifz-ses", 1); r.onupgradeneeded = () => r.result.createObjectStore("rec", { keyPath: "id" }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); }
-async function recList(){ try { const db = await idb(); return await new Promise(res => { const out = []; const tx = db.transaction("rec").objectStore("rec").openCursor(); tx.onsuccess = e => { const c = e.target.result; if (c) { const v = c.value; out.push({ id: v.id, p: v.p, p2: v.p2 || v.p, d: v.d, t: v.t || "", n: v.n || "", g: v.g || "", dur: v.dur || 0, errs: v.errs || [], ref: !!v.ref, video: /^video\//.test(v.blob.type || ""), size: v.blob.size }); c.continue(); } else res(out); }; tx.onerror = () => res(out); }); } catch (e) { return []; } }
+async function recList(){ try { const db = await idb(); return await new Promise(res => { const out = []; const tx = db.transaction("rec").objectStore("rec").openCursor(); tx.onsuccess = e => { const c = e.target.result; if (c) { const v = c.value; out.push({ id: v.id, p: v.p, p2: v.p2 || v.p, d: v.d, t: v.t || "", n: v.n || "", g: v.g || "", dur: v.dur || 0, errs: v.errs || [], ref: !!v.ref, who: v.who || "", video: /^video\//.test(v.blob.type || ""), size: v.blob.size }); c.continue(); } else res(out); }; tx.onerror = () => res(out); }); } catch (e) { return []; } }
 async function recSave(blob, p, n, p2){ const db = await idb(), id = uid(), now = new Date(); return new Promise((res, rej) => { const tx = db.transaction("rec", "readwrite"); tx.objectStore("rec").put({ id, p, p2: Math.max(p, p2 || p), d: TODAY, t: pad(now.getHours()) + ":" + pad(now.getMinutes()), n, g: "", dur: 0, errs: [], blob }); tx.oncomplete = () => res(id); tx.onerror = () => rej(tx.error); }); }
-async function recUpdate(id, fn){ try { const db = await idb(); await new Promise(res => { const tx = db.transaction("rec", "readwrite"), st = tx.objectStore("rec"), r = st.get(id); r.onsuccess = () => { if (r.result) { fn(r.result); st.put(r.result); } }; tx.oncomplete = res; tx.onerror = res; }); } catch (e) {} if (RECS) { const x = RECS.find(q => q.id === id); if (x) { const tmp = { errs: x.errs, g: x.g, n: x.n, dur: x.dur, ref: x.ref }; fn(tmp); Object.assign(x, tmp); } } const cc = S.recCloud && S.recCloud[id]; if (cc) { const tmp = { errs: cc.errs, g: cc.g, n: cc.n, dur: cc.dur, ref: cc.ref }; fn(tmp); Object.assign(cc, tmp); mark("recs"); } }
+async function recUpdate(id, fn){ try { const db = await idb(); await new Promise(res => { const tx = db.transaction("rec", "readwrite"), st = tx.objectStore("rec"), r = st.get(id); r.onsuccess = () => { if (r.result) { fn(r.result); st.put(r.result); } }; tx.oncomplete = res; tx.onerror = res; }); } catch (e) {} if (RECS) { const x = RECS.find(q => q.id === id); if (x) { const tmp = { errs: x.errs, g: x.g, n: x.n, dur: x.dur, ref: x.ref, who: x.who }; fn(tmp); Object.assign(x, tmp); } } const cc = S.recCloud && S.recCloud[id]; if (cc) { const tmp = { errs: cc.errs, g: cc.g, n: cc.n, dur: cc.dur, ref: cc.ref }; fn(tmp); Object.assign(cc, tmp); mark("recs"); } }
 async function recGet(id){ const loc = await recGetLocal(id); if (loc) return loc; if (S.recCloud && S.recCloud[id]) { toast("Kayıt buluttan iniyor…"); try { return await recFromCloud(id); } catch (e) { toast("Buluttan indirilemedi"); return null; } } return null; }
 async function recGetLocal(id){ const db = await idb(); return new Promise(res => { const r = db.transaction("rec").objectStore("rec").get(id); r.onsuccess = () => res(r.result); r.onerror = () => res(null); }); }
 async function recDel(id){ recCloudDel(id); const db = await idb(); return new Promise(res => { const tx = db.transaction("rec", "readwrite"); tx.objectStore("rec").delete(id); tx.oncomplete = res; tx.onerror = res; }); }
@@ -1571,14 +1578,15 @@ async function micStart(){
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const mime = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm"].find(m => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || "";
     const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined), chunks = [];
-    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-    rec.onstop = () => { stream.getTracks().forEach(t => t.stop()); const blob = new Blob(chunks, { type: rec.mimeType || "audio/mp4" }); const p = Math.max(1, Math.min(604, +rcv().p || ui.page)), n = (rcv().n || "").trim(); MREC = null; finishRec(blob, p, n); };
-    rec.start(1000); MREC = { rec, t0: Date.now() }; render();
+    const t0 = Date.now(), meta = () => { const r = rcv(); return { p: Math.max(1, Math.min(604, +r.p || ui.page)), p2: +r.p2 || 0, n: (r.n || "").trim(), who: (r.who || "").trim(), ref: !!r.ref, d: TODAY, t0 }; };
+    rec.ondataavailable = e => { if (e.data && e.data.size) { chunks.push(e.data); if (chunks.length % 4 === 0) draftPut(Object.assign(meta(), { blob: new Blob(chunks, { type: rec.mimeType || "audio/mp4" }), at: Date.now() })); } };
+    rec.onstop = () => { stream.getTracks().forEach(t => t.stop()); const bg = MREC && MREC.bg, blob = new Blob(chunks, { type: rec.mimeType || "audio/mp4" }); const m = meta(); MREC = null; if (bg) draftPut(Object.assign(m, { blob, at: Date.now() })); finishRec(blob, m.p, m.n + (bg ? (m.n ? " · " : "") + "uygulamadan çıkınca durdu" : "")); };
+    rec.start(1000); MREC = { rec, t0 }; render();
   } catch (e) { MIC_FAIL = true; MREC = null; render(); toast("Mikrofon bu görünümde açılamadı. Aşağıdaki iki yoldan birini kullan."); }
 }
 function micStop(){ if (MREC) MREC.rec.stop(); }
 setInterval(() => { const el = $("#mrect"); if (el && MREC) { const t = Math.floor((Date.now() - MREC.t0) / 1000); el.textContent = pad(Math.floor(t / 60)) + ":" + pad(t % 60); } }, 500);
-function finishRec(blob, p, n){ const p2 = Math.min(604, +rcv().p2 || p), isRef = !!rcv().ref; ui.newRec = false; ui.rc = null; recSave(blob, p, n, p2).then(async id => { if (isRef) await recUpdate(id, r => { r.ref = true; }); if (S.settings.recAuto) recBackup(id, true); RECS = null; toast("Kayıt arşive eklendi"); playRec(blob, recLabel({ p, p2, n }), p, id); }).catch(() => { toast("Kayıt bu cihaza saklanamadı; yine de dinleyebilirsin"); playRec(blob, "Sayfa " + p, p); }); }
+function finishRec(blob, p, n, o){ o = o || {}; const p2 = Math.min(604, o.p2 || +rcv().p2 || p), who = (o.who != null ? o.who : rcv().who || "").trim(), isRef = o.ref != null ? o.ref : (!!rcv().ref || (who && who !== "Ben")); ui.newRec = false; ui.rc = null; whoRemember(who); recSave(blob, p, n, p2).then(async id => { draftClear(); DRAFT = null; if (isRef || who) await recUpdate(id, r => { if (isRef) r.ref = true; if (who) r.who = who; }); if (S.settings.recAuto) recBackup(id, true); RECS = null; toast("Kayıt arşive eklendi"); playRec(blob, recLabel({ p, p2, n }), p, id); }).catch(() => { toast("Kayıt bu cihaza saklanamadı; yine de dinleyebilirsin"); playRec(blob, "Sayfa " + p, p); }); }
 const recLabel = r => "Sayfa " + r.p + (r.p2 && r.p2 > r.p ? "–" + r.p2 : "") + (r.n ? " · " + r.n : "");
 const fmtSec = x => { x = Math.round(x || 0); return Math.floor(x / 60) + ":" + pad(x % 60); };
 const GRADE = { ok: "Sağlam", warn: "Orta", bad: "Zayıf" };
@@ -1587,6 +1595,7 @@ function recNew(){
   const ios = /iP(hone|ad|od)/.test(navigator.userAgent);
   return `<div class="card newrec"><div class="row between"><h3>Yeni kayıt</h3><button class="ghost small" data-act="newrec">Kapat</button></div>
     <div class="grid3"><label>Sayfadan<input type="number" id="rc-p" min="1" max="604" value="${rcv().p}" inputmode="numeric"></label><label>Sayfaya<input type="number" id="rc-p2" min="1" max="604" value="${rcv().p2}" inputmode="numeric"></label><label>Not<input id="rc-n" value="${esc(rcv().n)}" placeholder="Örn. sabah tekrarı"></label></div>
+    <label>Okuyan<input id="rc-who" list="who-list" value="${esc(rcv().who || "")}" placeholder="Ben (boş bırakırsan sen)" autocomplete="off"></label><datalist id="who-list">${whoList().map(w => `<option value="${esc(w)}">`).join("")}</datalist>
     <label class="inline small"><input type="checkbox" id="rc-ref" ${rcv().ref ? "checked" : ""}> Bu bir referans okuma (hocamın ya da bir kurranın sesi)</label>
     <div class="recway"><div class="rw-h"><span class="rw-n">1</span><b>Doğrudan mikrofonla</b></div>
      ${MREC ? `<div class="row between"><span class="recdot"></span><b class="num big2" id="mrect">00:00</b><button class="danger-b" data-act="micstop">Kaydı bitir</button></div>`
@@ -1594,14 +1603,14 @@ function recNew(){
       : `<button class="primary wide" data-act="micstart">● Kaydı başlat</button>`}</div>
     <div class="recway"><div class="rw-h"><span class="rw-n">2</span><b>Ön kamerayla kaydet</b></div><p class="small">Telefonun kaydedicisinde "Video"yu seç, oku, "Videoyu kullan"a bas. Her telefonda çalışır.</p>
      <label class="filebtn primary">Ön kamerayla kaydet<input type="file" id="rc-file" accept="video/*" capture="user" hidden></label></div>
-    <div class="recway"><div class="rw-h"><span class="rw-n">3</span><b>Ses Kayıtları'ndan seç</b></div><p class="small">${ios ? "Ses Kayıtları → kaydı aç → <b>•••</b> → <b>Dosyalar'a Kaydet</b>, sonra burada <b>Göz At</b>." : "Telefonunun ses kaydedicisiyle kaydet, sonra dosyayı seç."}</p>
-     <label class="filebtn ghostb">Ses dosyası seç<input type="file" id="rc-file2" accept="audio/*,.m4a,.mp3,.wav,.aac,.ogg,.webm,.caf" hidden></label></div></div>`;
+    <div class="recway"><div class="rw-h"><span class="rw-n">3</span><b>Dosyadan ekle: ses kaydı, MP3, video</b></div><p class="small">Başka hafızlardan indirdiğin MP3, M4A ya da videoları da buradan ekle; yukarıya okuyanın adını yaz.</p><p class="small">${ios ? "Ses Kayıtları → kaydı aç → <b>•••</b> → <b>Dosyalar'a Kaydet</b>, sonra burada <b>Göz At</b>." : "Telefonunun ses kaydedicisiyle kaydet, sonra dosyayı seç."}</p>
+     <label class="filebtn ghostb">Ses ya da video dosyası seç<input type="file" id="rc-file2" accept="audio/*,video/*,.m4a,.mp3,.wav,.aac,.ogg,.webm,.caf,.mp4,.mov" hidden></label></div></div>`;
 }
 function recErrs(r){ return (r.errs || []).map(x => ({ x, e: S.err.find(e => e.id === x.eid) })).filter(o => o.e); }
 function vDinle(){
   if (RECS === null) { recList().then(l => { RECS = recMerge(l); render(); }); RECS = []; }
   const f = ui.recF || "", sel = ui.recSel || (ui.recSel = {});
-  const L = RECS.slice().sort((a, b) => (b.d + b.t).localeCompare(a.d + a.t)).filter(r => !f || (f === "ref" ? r.ref : f === "none" ? !r.g : r.g === f));
+  const L = RECS.slice().sort((a, b) => (b.d + b.t).localeCompare(a.d + a.t)).filter(r => !f || (f === "ref" ? r.ref : f === "none" ? !r.g : r.g === f)).filter(r => !ui.recWho || (r.who || "Ben") === ui.recWho);
   const cnt = g => RECS.filter(r => g === "none" ? !r.g : r.g === g).length;
   const totErr = RECS.reduce((s, r) => s + recErrs(r).length, 0), totMb = RECS.reduce((s, r) => s + r.size, 0) / 1048576;
   const nSel = Object.values(sel).filter(Boolean).length, selMode = !!ui.recSelMode;
@@ -1609,19 +1618,20 @@ function vDinle(){
     return `<div class="reccard ${r.g ? "g-" + r.g : ""} ${playing ? "playing" : ""}">
      <div class="rc-top">${selMode ? `<input type="checkbox" class="rcchk" data-recsel="${r.id}" ${sel[r.id] ? "checked" : ""} aria-label="Seç">` : ""}
       <button class="rc-main" data-recopen="${r.id}"><b>${esc(recLabel(r))}</b><span class="small muted">${esc(SN(ref(pStart(r.p))[0]))} · ${juzOfPage(r.p)}. cüz · ${trDY(r.d)}${r.t ? " " + r.t : ""}${r.dur ? " · " + fmtSec(r.dur) : ""}${r.video ? " · video" : ""}</span>
-       <span class="row rc-chips">${r.cloudOnly ? `<span class="chip c-none">☁ Yalnızca bulutta</span>` : r.cloud ? `<span class="chip c-ok">☁ Yedekli</span>` : ""}${r.ref ? `<span class="chip c-gold">Referans</span>` : ""}${r.g ? `<span class="chip c-${r.g}">${GRADE[r.g]}</span>` : `<span class="chip c-none">Değerlendirilmedi</span>`}${E.length ? Object.entries(byK).map(([k, n]) => `<span class="chip c-bad">${esc((ERRN[k] || k).split(" ")[0])} ${n}</span>`).join("") : `<span class="chip c-ok">Hata işaretlenmedi</span>`}</span></button>
+       <span class="row rc-chips">${r.who && r.who !== "Ben" ? `<span class="chip c-gold">${esc(r.who)}</span>` : ""}${r.cloudOnly ? `<span class="chip c-none">☁ Yalnızca bulutta</span>` : r.cloud ? `<span class="chip c-ok">☁ Yedekli</span>` : ""}${r.ref ? `<span class="chip c-gold">Referans</span>` : ""}${r.g ? `<span class="chip c-${r.g}">${GRADE[r.g]}</span>` : `<span class="chip c-none">Değerlendirilmedi</span>`}${E.length ? Object.entries(byK).map(([k, n]) => `<span class="chip c-bad">${esc((ERRN[k] || k).split(" ")[0])} ${n}</span>`).join("") : `<span class="chip c-ok">Hata işaretlenmedi</span>`}</span></button>
       <button class="playbtn ${playing ? "on" : ""}" data-recplay="${r.id}" aria-label="Dinle">${playing ? "♪" : "▶"}</button></div>
      ${open ? `<div class="rc-det">
        <div class="seg">${Object.entries(GRADE).map(([g, l]) => `<button class="${r.g === g ? "on" : ""}" data-recgrade="${r.id}|${g}">${l}</button>`).join("")}<button class="${!r.g ? "on" : ""}" data-recgrade="${r.id}|">—</button></div>
        <label>Not<input id="rn-${r.id}" data-recnote="${r.id}" value="${esc(r.n)}" placeholder="Bu okuma hakkında not"></label>
        <h4>Bu kayıtta işaretlenen hatalar (${E.length})</h4>
        ${E.length ? E.sort((a, b) => a.x.ts - b.x.ts).map(o => `<div class="item"><div class="t"><span class="small"><button class="tsbtn num" data-seek="${r.id}|${o.x.ts}">${fmtSec(o.x.ts)}</button> <b>s. ${o.e.p}</b> · ${esc(o.e.i >= 0 ? refStr(o.e.i) : "")} <span class="chip c-none">${esc(ERRN[o.e.k] || o.e.k)}</span></span>${o.e.r || o.e.cr ? `<span class="small">${o.e.r ? `<span class="danger">${esc(o.e.r)}</span> → ` : ""}<b>${esc(o.e.cr || "")}</b></span>` : ""}</div><button class="ghost small" data-recunlink="${r.id}|${o.e.id}">Kayıttan çıkar</button></div>`).join("") : `<p class="small muted">Dinlerken ayete dokunup "Hata ekle" dediğinde hata bu kayda, saniyesiyle bağlanır.</p>`}
-       ${recCmp(r)}<div class="row"><button class="primary small" data-recplay="${r.id}">▶ Dinle ve takip et</button>${r.cloud ? "" : `<button class="small" data-recbak="${r.id}" ${ui.upBusy ? "disabled" : ""}>${ui.upBusy === r.id ? "Yükleniyor…" : "☁ Buluta yedekle"}</button>`}<button class="ghost small" data-recref="${r.id}">${r.ref ? "Referanslıktan çıkar" : "Referans olarak işaretle"}</button><button class="ghost small" data-open="${r.p}">Sayfayı aç</button>${confirmBtn("rec:" + r.id, "Kaydı sil")}</div></div>` : ""}</div>`; };
-  return `<section><div class="row between"><h2>Kendini dinle</h2><button class="primary" data-act="newrec">${ui.newRec ? "Kapat" : "● Yeni kayıt"}</button></div>
+       ${recCmp(r)}<div class="row"><button class="primary small" data-recplay="${r.id}">▶ Dinle ve takip et</button>${r.cloud ? "" : `<button class="small" data-recbak="${r.id}" ${ui.upBusy ? "disabled" : ""}>${ui.upBusy === r.id ? "Yükleniyor…" : "☁ Buluta yedekle"}</button>`}<button class="ghost small" data-recshare="${r.id}">Telefona kaydet / paylaş</button><button class="ghost small" data-recref="${r.id}">${r.ref ? "Referanslıktan çıkar" : "Referans olarak işaretle"}</button><button class="ghost small" data-open="${r.p}">Sayfayı aç</button>${confirmBtn("rec:" + r.id, "Kaydı sil")}</div></div>` : ""}</div>`; };
+  if (!DRAFT && !draftCheck.t) { draftCheck.t = 1; draftCheck(); }
+  return `<section>${draftCard()}<div class="row between"><h2>Kendini dinle</h2><button class="primary" data-act="newrec">${ui.newRec ? "Kapat" : "● Yeni kayıt"}</button></div>
    ${ui.newRec || MREC ? recNew() : ""}
    <div class="stats"><div class="stat"><b class="num">${RECS.length}</b><span>kayıt</span></div><div class="stat"><b class="num">${totErr}</b><span>işaretli hata</span></div><div class="stat c-ok"><b class="num">${cnt("ok")}</b><span>sağlam</span></div><div class="stat c-bad"><b class="num">${cnt("bad")}</b><span>zayıf</span></div></div>${RECS.length ? vCloudBar() : ""}
-   <div class="row between"><div class="chips">${[["", "Tümü"], ["ref", "Referans"], ["ok", "Sağlam"], ["warn", "Orta"], ["bad", "Zayıf"], ["none", "Değerlendirilmemiş"]].map(([v, l]) => `<button class="fchip ${f === v ? "on" : ""}" data-recf="${v}">${l}</button>`).join("")}</div></div>
-   ${RECS.length ? `<div class="row between selbar">${selMode ? `<button class="ghost small" data-act="recselall">${nSel === L.length && L.length ? "Seçimi kaldır" : "Tümünü seç"}</button>${nSel ? (ui.conf === "recs:sel" ? `<button class="danger-b small" data-confirm="recs:sel">${nSel} kaydı kalıcı sil</button>` : `<button class="ghost small danger" data-ask="recs:sel">Seçilenleri sil (${nSel})</button>`) : `<span class="small muted">Silmek istediklerini seç</span>`}<button class="ghost small" data-act="recselmode">Bitti</button>` : `<span class="small muted num">${totMb.toFixed(1)} MB · yalnızca bu cihazda</span><button class="ghost small" data-act="recselmode">Seç ve sil</button>`}</div>` : ""}
+   <div class="row between"><div class="chips">${[["", "Tümü"], ["ref", "Referans"], ["ok", "Sağlam"], ["warn", "Orta"], ["bad", "Zayıf"], ["none", "Değerlendirilmemiş"]].map(([v, l]) => `<button class="fchip ${f === v ? "on" : ""}" data-recf="${v}">${l}</button>`).join("")}</div></div>${whoList().length > 1 ? `<label class="inline small">Okuyan<select id="rec-who"><option value="">Herkes</option>${whoList().map(w => opt(w, w, ui.recWho || "")).join("")}</select></label>` : ""}
+   ${RECS.length ? `<div class="row between selbar">${selMode ? `<button class="ghost small" data-act="recselall">${nSel === L.length && L.length ? "Seçimi kaldır" : "Tümünü seç"}</button>${nSel ? (ui.conf === "recs:sel" ? `<button class="danger-b small" data-confirm="recs:sel">${nSel} kaydı kalıcı sil</button>` : `<button class="ghost small danger" data-ask="recs:sel">Seçilenleri sil (${nSel})</button>`) : `<span class="small muted">Silmek istediklerini seç</span>`}${nSel ? `<button class="ghost small" data-act="recsharesel">Telefona kaydet (${nSel})</button>` : ""}<button class="ghost small" data-act="recselmode">Bitti</button>` : `<span class="small muted num">${totMb.toFixed(1)} MB · yalnızca bu cihazda</span><button class="ghost small" data-act="recselmode">Seç</button>`}</div>` : ""}
    ${L.length ? L.map(card).join("") : `<div class="card"><p class="empty">${RECS.length ? "Bu filtrede kayıt yok." : "Henüz kayıt yok. \"● Yeni kayıt\" ile ilk okumanı kaydet; kayıtların burada birikir, dinleyip hatalarını işaretlersin."}</p></div>`}
    <p class="tiny">Uygulama sesi kendisi dinleyip hata bulamaz; dinlerken sen işaretlersin. Kayıtlar önce bu cihazda saklanır; "Buluta yedekle" dediklerin hesabına da yüklenir.</p></section>`;
 }
@@ -2254,6 +2264,77 @@ function trTefsirPage(p){
   return `<details class="tipsec"><summary><h4 style="display:inline">Kur'an Yolu tefsirinden bu sayfanın açıklamaları</h4></summary>${parts.join("")}<p class="tiny">Kaynak: Diyanet İşleri Başkanlığı, Kur'an Yolu Türkçe Meal ve Tefsir. Claude gerekmez, internetsiz de açılır.</p></details>`;
 }
 
+/* ===== Telefon: yarım kalan kayıt taslağı ===== */
+var _ddb = null;
+function ddb(){ if (!_ddb) _ddb = new Promise((res, rej) => { try { const r = indexedDB.open("hifz-draft", 1); r.onupgradeneeded = () => r.result.createObjectStore("d"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }).catch(() => null); return _ddb; }
+async function draftPut(v){ const db = await ddb(); if (!db) return; try { db.transaction("d", "readwrite").objectStore("d").put(v, "cur"); } catch (e) {} }
+async function draftGet(){ const db = await ddb(); if (!db) return null; return new Promise(res => { try { const q = db.transaction("d").objectStore("d").get("cur"); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); } catch (e) { res(null); } }); }
+async function draftClear(){ const db = await ddb(); if (!db) return; try { db.transaction("d", "readwrite").objectStore("d").delete("cur"); } catch (e) {} }
+let DRAFT = null;
+async function draftCheck(){ const d = await draftGet(); if (d && d.blob && d.blob.size > 2000 && !MREC) { DRAFT = d; render(); } }
+function draftCard(){
+  if (!DRAFT) return "";
+  return `<div class="card warnc"><b>Yarım kalan bir kayıt bulundu</b><p class="small">s. ${DRAFT.p}${DRAFT.p2 && DRAFT.p2 !== DRAFT.p ? "–" + DRAFT.p2 : ""} · ${trDY(DRAFT.d)} · yaklaşık ${fmtSec(Math.round((DRAFT.at - DRAFT.t0) / 1000))}. Uygulamadan çıkınca kayıt durmuştu; o ana kadarki kısmı saklandı.</p>
+   <div class="row"><button class="primary small" data-act="draftsave">Arşive ekle</button><button class="ghost small" data-act="draftdel">Sil</button></div></div>`;
+}
+document.addEventListener("visibilitychange", () => { if (document.hidden && MREC) { MREC.bg = true; try { MREC.rec.requestData(); } catch (e) {} try { MREC.rec.stop(); } catch (e) {} } });
+window.addEventListener("pagehide", () => { if (MREC) { MREC.bg = true; try { MREC.rec.stop(); } catch (e) {} } });
+
+/* ===== Okuyan (hafız / kurra) ===== */
+function whoList(){ const s = new Set(["Ben"]); (RECS || []).forEach(r => r.who && s.add(r.who)); (S.whoNames || []).forEach(n => s.add(n)); return [...s]; }
+function whoRemember(n){ if (!n || n === "Ben") return; S.whoNames = S.whoNames || []; if (!S.whoNames.includes(n)) { S.whoNames.push(n); mark("core"); } }
+
+/* ===== Kaydı telefona kaydet / paylaş ===== */
+function recExt(t){ t = String(t || ""); return /mp4|m4a|aac/.test(t) ? (/^video/.test(t) ? "mp4" : "m4a") : /quicktime/.test(t) ? "mov" : /mpeg|mp3/.test(t) ? "mp3" : /wav/.test(t) ? "wav" : /webm/.test(t) ? "webm" : /ogg/.test(t) ? "ogg" : "m4a"; }
+function recFileName(r){ return ("hifz-s" + r.p + (r.p2 && r.p2 !== r.p ? "-" + r.p2 : "") + "-" + (r.who && r.who !== "Ben" ? r.who.replace(/[^\wçğıöşüÇĞİÖŞÜ]+/g, "-") + "-" : "") + r.d).replace(/-+/g, "-") + "." + recExt(r.blob && r.blob.type); }
+async function recShare(ids){
+  const recs = []; for (const id of ids) { const r = await recGet(id); if (r) recs.push(r); }
+  if (!recs.length) return;
+  const files = recs.map(r => new File([r.blob], recFileName(r), { type: r.blob.type || "audio/mp4" }));
+  try { if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+  files.forEach(f => { const u = URL.createObjectURL(f), a = document.createElement("a"); a.href = u; a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 8000); });
+}
+
+/* ===== iPhone Takvimi: günlük tekrar hatırlatmaları ===== */
+function icsEsc(s){ return String(s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n"); }
+function icsFold(l){ const out = []; let s = l; while (s.length > 70) { out.push(s.slice(0, 70)); s = " " + s.slice(70); } out.push(s); return out.join("\r\n"); }
+function buildIcs(days, hm, mins){
+  const [hh, mm] = hm.split(":").map(Number), L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Hifz Defteri//TR", "CALSCALE:GREGORIAN", "X-WR-CALNAME:Hıfz Defteri"];
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+  const pad2 = n => String(n).padStart(2, "0");
+  for (let k = 0; k < days; k++) {
+    const d = addDays(TODAY, k), P = partsFor(d).parts; if (!P.length) continue;
+    const ymd = d.replace(/-/g, ""), st = ymd + "T" + pad2(hh) + pad2(mm) + "00", endM = hh * 60 + mm + mins, en = ymd + "T" + pad2(Math.floor(endM / 60) % 24) + pad2(endM % 60) + "00";
+    const pg = P.reduce((s, p) => s + partPageList(p).length, 0);
+    const sum = "Hıfz: " + P.slice(0, 3).map(p => p.lab || ("s. " + p.f + "–" + p.t)).join(" · ") + (P.length > 3 ? " +" + (P.length - 3) : "");
+    const desc = P.map(p => "• " + (p.lab || "") + " (s. " + p.f + (p.t !== p.f ? "–" + p.t : "") + ")").join("\n") + "\nToplam " + pg + " sayfa.";
+    L.push("BEGIN:VEVENT", "UID:hifz-" + ymd + "@hifz-defteri", "DTSTAMP:" + stamp, "DTSTART:" + st, "DTEND:" + en, icsFold("SUMMARY:" + icsEsc(sum)), icsFold("DESCRIPTION:" + icsEsc(desc)), "BEGIN:VALARM", "ACTION:DISPLAY", icsFold("DESCRIPTION:" + icsEsc(sum)), "TRIGGER:-PT0M", "END:VALARM", "END:VEVENT");
+  }
+  L.push("END:VCALENDAR"); return L.join("\r\n");
+}
+async function icsExport(){
+  const R = S.remind || { hm: "07:00", days: 30, mins: 45 }, txt = buildIcs(+R.days, R.hm, +R.mins), name = "hifz-hatirlatma.ics";
+  const f = new File([txt], name, { type: "text/calendar" });
+  try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f] }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+  const u = URL.createObjectURL(f), a = document.createElement("a"); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 8000);
+}
+function vRemind(){
+  const R = S.remind || (S.remind = { hm: "07:00", days: 30, mins: 45 });
+  return `<div class="card"><h3>iPhone'a hatırlatma ekle</h3>
+   <p class="small">Planındaki her günün tekrarını (hangi cüz, hangi sayfalar) iPhone Takvimi'ne etkinlik olarak ekler; saatinde bildirim gelir. Uygulama kapalıyken de çalışır.</p>
+   <div class="grid3"><label>Saat<input type="time" id="rm-hm" value="${R.hm}"></label><label>Kaç gün<select id="rm-days">${[[7, "7 gün"], [14, "14 gün"], [30, "30 gün"], [60, "60 gün"]].map(([v, l]) => opt(v, l, R.days)).join("")}</select></label><label>Süre (dk)<input type="number" id="rm-mins" value="${R.mins}" min="10" max="240" inputmode="numeric"></label></div>
+   <button class="primary wide" data-act="icsexp">Takvime ekle</button>
+   <p class="tiny">Açılan menüde <b>Dosyalara Kaydet</b>'i seç, sonra Dosyalar'da <b>hifz-hatirlatma.ics</b>'e dokun ve <b>Tümünü Ekle</b> de. Menüde <b>Takvim</b> görünürse doğrudan ona da basabilirsin. Planı değiştirirsen eski etkinlikleri Takvim'den silip yeniden ekle. Öneri: Takvim'de "Hıfz" adında ayrı bir takvim açıp etkinlikleri ona ekle; topluca silmesi kolay olur.</p></div>`;
+}
+
+/* ===== Okurken ekran kapanmasın ===== */
+let WL = null;
+async function wakeSync(){
+  const want = ui.tab === "mushaf" && S.settings.wake !== false && !document.hidden;
+  try { if (want && !WL && navigator.wakeLock) { WL = await navigator.wakeLock.request("screen"); WL.addEventListener("release", () => { WL = null; }); } else if (!want && WL) { await WL.release(); WL = null; } } catch (e) { WL = null; }
+}
+document.addEventListener("visibilitychange", () => { WL = null; wakeSync(); });
+
 /* ===== Kişisel ezber analizi ===== */
 function vAnaliz(){
   const E = S.err; if (!E.length && !S.quiz.length) return `<div class="card"><p class="empty">Analiz için önce hata kaydı ya da sınama sonucu gerekiyor. Dinletmede yakaladığın hataları Mushaf'ta ayete dokunup "Hata ekle" ile gir.</p></div>`;
@@ -2769,7 +2850,7 @@ const USUL = [
 
 /* ---------- Menü + Ayarlar ---------- */
 function vMenu(){
-  const it = [["sina", "Kendini sına", "Sayfa başı, sonraki ayet, hangi sayfa, hangi sure"], ["takip", "Takip", "Cüz renkleri, sayfa haritası, hata defteri, haftalık değerlendirme"], ["ist", "İstatistik", "Süre, sayfa ve başarı grafikleri"], ["plan", "Plan ve yöntemler", "Hatim, kademeli, sure sure, hizb, yakın–uzak, menzil"], ["dinle", "Kendini dinle", "Ses kaydını mushafla takip ederek hata yakala"], ["hoca", "Hoca ve arkadaş", "Durumunu paylaş, hocandan dinletme kaydı al"], ["mukabele", "Mukabele / Ramazan", "Okuyucular arasında günlük cüz paylaşımı"], ["gen", "Hazır içerik", "Claude içeriklerini bir kere hazırla; internetsiz ve Claude'suz sürümde de kullan"], ["konu", "Konu fihristi", "14 ana başlık, 17 bin alt konu: ayetleri konusuna göre bul"], ["rapor", "Hafızlık raporu", "Hocana verilecek özet: cüzler, dinletmeler, zayıf sayfalar"], ["rehber", "Rehber", "Cüz, sayfa, hizb başları, sureler, tecvid, kıraatler, Kur'an ilimleri"], ["ayar", "Ayarlar ve yedek", "Yazı boyutu, meal, süre tahmini, yedekleme"]];
+  const it = [["sina", "Kendini sına", "Sayfa başı, sonraki ayet, hangi sayfa, hangi sure"], ["takip", "Takip", "Cüz renkleri, sayfa haritası, hata defteri, haftalık değerlendirme"], ["ist", "İstatistik", "Süre, sayfa ve başarı grafikleri"], ["plan", "Plan ve yöntemler", "Hatim, kademeli, sure sure, hizb, yakın–uzak, menzil"], ["dinle", "Kendini dinle", "Ses kaydını mushafla takip ederek hata yakala"], ["hoca", "Hoca ve arkadaş", "Durumunu paylaş, hocandan dinletme kaydı al"], ["mukabele", "Mukabele / Ramazan", "Okuyucular arasında günlük cüz paylaşımı"], ["hatir", "Hatırlatmalar", "Günün tekrarını iPhone Takvimi'ne ekle, bildirim gelsin"], ["gen", "Hazır içerik", "Claude içeriklerini bir kere hazırla; internetsiz ve Claude'suz sürümde de kullan"], ["konu", "Konu fihristi", "14 ana başlık, 17 bin alt konu: ayetleri konusuna göre bul"], ["rapor", "Hafızlık raporu", "Hocana verilecek özet: cüzler, dinletmeler, zayıf sayfalar"], ["rehber", "Rehber", "Cüz, sayfa, hizb başları, sureler, tecvid, kıraatler, Kur'an ilimleri"], ["ayar", "Ayarlar ve yedek", "Yazı boyutu, meal, süre tahmini, yedekleme"]];
   return `<section><h2>Menü</h2><div class="methods">${it.map(([k, t, d]) => `<button class="method" data-tab="${k}"><b>${t}</b><span class="small muted">${d}</span></button>`).join("")}</div></section>`;
 }
 function vAyar(){
@@ -2787,12 +2868,12 @@ function vAyar(){
 
 /* ---------- çizim ---------- */
 const NAV = [["bugun", "Bugün", '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'], ["takvim", "Takvim", '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'], ["mushaf", "Mushaf", '<path d="M4 5c3-1 5-1 8 1v14c-3-2-5-2-8-1zM20 5c-3-1-5-1-8 1v14c3-2 5-2 8-1z"/>'], ["mut", "Müteşabih", '<path d="M4 7h7M4 12h7M4 17h7M14 7h6M14 12h6M14 17h6"/>'], ["menu", "Menü", '<circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>']];
-const VIEWS = { gen: vGen, konu: vKonu, rapor: vRapor, bugun: vBugun, takvim: vTakvim, mushaf: vMushaf, mut: vMut, menu: vMenu, sina: vSina, takip: vTakip, ist: vIst, plan: vPlan, rehber: vRehber, ayar: vAyar, dinle: vDinle, hoca: vHoca, mukabele: vMukabele };
+const VIEWS = { hatir: () => `<section><h2>Hatırlatmalar</h2>${vRemind()}<div class="card"><h3>Telefon</h3><label class="inline"><input type="checkbox" id="set-wake" ${S.settings.wake !== false ? "checked" : ""}> Mushaf açıkken ekran kapanmasın</label></div></section>`, gen: vGen, konu: vKonu, rapor: vRapor, bugun: vBugun, takvim: vTakvim, mushaf: vMushaf, mut: vMut, menu: vMenu, sina: vSina, takip: vTakip, ist: vIst, plan: vPlan, rehber: vRehber, ayar: vAyar, dinle: vDinle, hoca: vHoca, mukabele: vMukabele };
 function render(){
   const navOn = NAV.some(n => n[0] === ui.tab) ? ui.tab : "menu";
   $("#nav").innerHTML = NAV.map(n => `<button class="${navOn === n[0] ? "on" : ""}" data-tab="${n[0]}" aria-label="${n[1]}"><svg viewBox="0 0 24 24" aria-hidden="true">${n[2]}</svg>${n[1]}</button>`).join("");
   $("#back").hidden = navOn !== "menu" || ui.tab === "menu";
-  $("#main").innerHTML = (VIEWS[ui.tab] || vBugun)(); fitLines(); requestAnimationFrame(fitLines);
+  $("#main").innerHTML = (VIEWS[ui.tab] || vBugun)(); fitLines(); requestAnimationFrame(fitLines); wakeSync();
   const ab = $("#abar"); const au = AUDIO ? AUDIO.url + (AUDIO.cmp ? "|" + AUDIO.cmp.url : "") : ""; if (ab.dataset.url !== au) { ab.innerHTML = audioBar(); ab.dataset.url = au; ab.hidden = !AUDIO; const pl = $("#aplayer"); if (pl && AUDIO && AUDIO.id) pl.addEventListener("loadedmetadata", () => { if (isFinite(pl.duration) && pl.duration > 0) { const id = AUDIO.id, d = Math.round(pl.duration); recUpdate(id, r => { if (!r.dur) r.dur = d; }); } }, { once: true }); } document.body.classList.toggle("hasaudio", !!AUDIO);
 }
 function go(t){ ui.tab = t; ui.conf = null; try { localStorage.setItem("hifz-ui", JSON.stringify({ tab: t, page: ui.page })); } catch (e) {} render(); window.scrollTo(0, 0); }
@@ -2833,6 +2914,7 @@ document.addEventListener("click", e => {
   if (a.mline) { const L = ui.lineRev || (ui.lineRev = {}); L[a.mline] = !L[a.mline]; return render(); }
   if (a.lwk) { ui.lwK = a.lwk; return render(); }
   if (a.sil) { ui.silLv = Math.max(1, Math.min(5, (+(ui.silLv || 2)) + (+a.sil))); ui.lineRev = {}; return render(); }
+  if (a.recshare) { recShare([a.recshare]); return; }
   if (a.recbak) { recBackup(a.recbak); return; }
   if (a.offget) { offlineGet(a.offget); return; }
   if (a.telafi) { const n = +a.telafi, M = missedParts(); S.telafi = { items: M.map(m => ({ f: m.f, t: m.t, pg: m.pg, lab: m.lab })), start: TODAY, days: n }; mark("core"); toast(M.length + " parça " + n + " güne dağıtıldı"); return render(); }
@@ -2879,6 +2961,10 @@ document.addEventListener("click", e => {
     cmpsync(){ const a1 = $("#aplayer"), a2 = $("#aplayer2"); if (!a1 || !a2) return true; const f = a1.duration && isFinite(a1.duration) ? a1.currentTime / a1.duration : 0; a1.pause(); if (a2.duration && isFinite(a2.duration)) a2.currentTime = f * a2.duration; a2.play().catch(() => {}); return true; },
     cmpswap(){ const a1 = $("#aplayer"), a2 = $("#aplayer2"); if (!a1 || !a2) return true; a1.pause(); a2.currentTime = 0; a2.onended = () => { a2.onended = null; a1.currentTime = 0; a1.play().catch(() => {}); }; a2.play().catch(() => {}); return true; },
     genstart(){ genRun(); return true; }, genstop(){ ui.genRun = false; ui.genMsg = "Durduruldu; kaldığı yerden devam edebilirsin."; }, packdl(){ saveFile("hifz-icerik-" + TODAY + ".json", packContent()).then(ok => ok && toast("İçerik paketi indirildi")); return true; }, packall(){ saveFile("hifz-tum-veriler-" + TODAY + ".json", packAll()).then(ok => ok && toast("Bütün veriler indirildi")); return true; },
+    draftsave(){ const d = DRAFT; if (!d) return true; DRAFT = null; finishRec(d.blob, d.p, d.n + (d.n ? " · " : "") + "yarım kalan kayıt", { p2: d.p2, who: d.who || "", ref: d.ref }); },
+    draftdel(){ DRAFT = null; draftClear(); },
+    icsexp(){ icsExport(); return true; },
+    recsharesel(){ recShare(Object.keys(ui.recSel || {}).filter(k => ui.recSel[k])); return true; },
     recbackupall(){ recBackupAll(); return true; }, lwreset(){ ui.lmk = {}; }, telafioff(){ S.telafi = null; mark("core"); }, lightoff(){ S.light = null; mark("core"); }, lrall(){ const PL = pageLines(ui.page) || []; ui.lineRev = {}; PL.forEach(o => ui.lineRev[ui.page + ":" + o.n] = true); }, lrnone(){ ui.lineRev = {}; },
     konok(){ const q = ui.quiz; q.done = true; quizLog(q.gs === q.side && q.gb === q.band); },
     apnuzul(){ genNuzul(+a.i); return true; }, kirall(){ KIR.forEach(([v]) => loadX("k-" + v, "src/kiraat/" + v + ".json")); }, konumore(){ ui.konuLim = (ui.konuLim || 30) + 30; }, cardshow(){ ui.card.shown = true; }, report(){ downloadReport(); return true; }, shrefresh(){ SHARE_LIST = null; }, mtray(){ ui.mTray = !ui.mTray; }, goopen(){ ui.goOpen = true; }, goclose(){ ui.goOpen = false; },
@@ -2913,6 +2999,10 @@ document.addEventListener("change", e => {
   if (id === "cal-m" || id === "cal-y") { ui.cal = $("#cal-y").value + "-" + pad($("#cal-m").value); return render(); }
   if (id === "cal-go" && t.value) { ui.day = t.value; ui.cal = t.value.slice(0, 7); return render(); }
   if (id === "pg-r") return openPage(+t.value);
+  if (id === "rc-who") { rcv().who = t.value; return; }
+  if (id === "rec-who") { ui.recWho = t.value; return render(); }
+  if (id === "rm-hm" || id === "rm-days" || id === "rm-mins") { S.remind = S.remind || { hm: "07:00", days: 30, mins: 45 }; S.remind[id.slice(3)] = id === "rm-hm" ? t.value : +t.value; mark("core"); return; }
+  if (id === "set-wake") { S.settings.wake = t.checked; mark("core"); wakeSync(); return; }
   if (id === "rc-p" || id === "rc-p2" || id === "rc-n") { const r = rcv(); r[id === "rc-p" ? "p" : id === "rc-p2" ? "p2" : "n"] = id === "rc-n" ? t.value : Math.max(1, Math.min(604, +t.value || 1)); if (id === "rc-p" && +r.p2 < +r.p) { r.p2 = r.p; const e2 = $("#rc-p2"); if (e2) e2.value = r.p; } return; }
   if (a.recsel) { (ui.recSel = ui.recSel || {})[a.recsel] = t.checked; return render(); }
   if (a.recnote) { recUpdate(a.recnote, r => { r.n = t.value.trim(); }); return; }
