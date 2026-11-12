@@ -557,6 +557,7 @@ details.tur{padding:8px 0;border-bottom:1px solid var(--line)}details.tur:last-o
 .dbig{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}.dbig div{background:var(--sheet);border-radius:10px;padding:8px 2px}.dbig b{display:block;font-size:18px;color:var(--accent)}.dbig span{font-size:11px;color:var(--muted)}
 .dsumerr{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;font-weight:400;font-size:13px;padding:8px 10px}.dsdet{display:flex;flex-direction:column;gap:4px;padding:4px 2px}
 
+.ptabs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.ptabs button{padding:6px 10px;font-size:13px;border-radius:99px;font-weight:500}.ptabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}.ptabs b{margin-left:2px}
 @media (max-width:430px){.grid3{grid-template-columns:1fr 1fr}.methods{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.stats.s3{grid-template-columns:repeat(3,1fr)}.juzgrid{grid-template-columns:repeat(5,1fr)}}
 @media (max-width:360px){.grid2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
@@ -2479,8 +2480,7 @@ function vSepet(){
     <p class="tiny">${ui.rangeMode ? (sel ? `Başlangıç s. ${sel}. Şimdi bitiş sayfasına dokun.` : "Başlangıç sayfasına, sonra bitiş sayfasına dokun; aradaki hepsi işaretlenir.") : "Bir kutuya dokununca o sayfa, soldaki cüz numarasına dokununca bütün cüz seçili renkle işaretlenir."} Uzun basmana gerek yok. Bugün okuduğun sayfalar noktalı görünür.</p>
     <div class="sgrid">${rows}</div>
     <div class="row"><button class="ghost small" data-act="sallok">Hepsini sağlam say</button><button class="ghost small" data-act="sclear">Hepsini temizle</button></div></div>
-   <div class="card"><h3>Kalan ${kalan.length} sayfa</h3>${kalan.length ? Object.entries(byJ).map(([j, L]) => `<div class="kalan"><b class="small">${j}. cüz</b> <span class="small">${rangesOf(L).map(([a, b]) => `<button class="chip c-${pst(a) || "none"}" data-open="${a}">${a === b ? a : a + "–" + b}</button>`).join(" ")}</span></div>`).join("") : `<p class="empty">Bütün sayfalar sağlam sepette. Maşallah!</p>`}</div>
-   ${vPageNotes()}${vRounds(4)}
+   ${vPageLists()}${vPageNotes()}${vRounds(4)}
    <div class="card"><h3>Kullanım şekli</h3>${seg("mode", [["plan", "Programlı"], ["sepet", "Programsız (sepet)"]], S.mode === "sepet" ? "sepet" : "plan")}
     <p class="tiny">Programsızda Bugün ekranı plan yerine "Bugün ne okuyayım?" önerisini gösterir; okuduklarını "Okudum" ile işaretlersin. Sepet ve sayfa durumları iki şekilde de aynıdır; istediğin zaman geçebilirsin.</p></div>
    ${vSepetToday()}</section>`;
@@ -2570,6 +2570,7 @@ function vGenel(){
     <div class="sbig"><div><b class="num">${C.ok}</b><span>sağlam</span></div><div><b class="num">${C.warn + C.bad}</b><span>orta/zayıf</span></div><div><b class="num">%${pct(C.ok)}</b><span>tamam</span></div></div>
     <div class="sbar"><i class="s-ok" style="width:${pct(C.ok)}%"></i><i class="s-warn" style="width:${pct(C.warn)}%"></i><i class="s-bad" style="width:${pct(C.bad)}%"></i></div>
     ${(() => { let n = 0; for (let q = 1; q <= 604; q++) if (fadeOf(q)) n++; return n ? `<p class="small gold">${n} sağlam sayfa solmaya yüz tuttu (uzun süredir okunmadı).</p>` : ""; })()}${vSepetSummary(true)}<details><summary class="small">Cüz cüz sağlamlık</summary><div class="jbars">${jbars}</div></details></div>
+   ${vPageLists()}
    <div class="card"><h3>Dinletme</h3>
     <div class="stats"><div class="stat"><b class="num">${30 - never.length}/30</b><span>dinletilmiş cüz</span></div><div class="stat"><b class="num">${logs30.length}</b><span>son 30 gün dinletme</span></div><div class="stat"><b class="num">${pgDl}</b><span>dinletilen sayfa</span></div><div class="stat"><b class="num">${recMine}</b><span>kendi kaydın</span></div></div>
     <div class="jdls">${jDl}</div>
@@ -2933,6 +2934,26 @@ function vRounds(n){
 function curRoundStart(){ const L = roundsList().filter(r => r.cur); return L.length ? L[L.length - 1].from : addDays(TODAY, -30); }
 function roundPages(){ const from = curRoundStart(), read = new Set(), dl = {}; for (let d = from; d <= TODAY; d = addDays(d, 1)) { const x = S.days[d]; if (!x) continue; (x.read || []).forEach(p => read.add(p)); partsFor(d).parts.forEach(p => { if (x.done && x.done[partKey(p)]) partPageList(p).forEach(q => read.add(q)); }); }
   (S.dinlet || []).filter(s => s.d >= from).forEach(s => { for (let p = s.f; p <= s.t; p++) dl[p] = 1; }); return { from, read, dl }; }
+
+/* ===== Sayfa listeleri: durumlara göre ===== */
+const PLC = [["ok", "Sağlam"], ["warn", "Orta"], ["bad", "Zayıf"], ["none", "İşaretsiz"], ["nodl", "Hiç dinletilmedi"], ["fade", "Soluk"], ["has", "Has"], ["ham", "Ham"]];
+const PLD = { ok: "Sağlam işaretli sayfalar.", warn: "Orta: ara ara takılınan ya da son dinletmede hata olan sayfalar.", bad: "Zayıf: sık hata yapılan sayfalar; önce bunlara bak.", none: "Henüz durum vermediğin sayfalar.", nodl: "Hiç kimseye dinletilmemiş sayfalar; işaretli olsalar bile ölçülmemiş sayılır.", fade: "Sağlam ama uzun süredir okunmadığı için solmaya yüz tutan sayfalar.", has: "En az iki kez dinletilmiş sayfalar.", ham: "Sadece bir kez dinletilmiş sayfalar." };
+function plistPages(k){
+  const C = dlCounts(), out = [];
+  for (let p = 1; p <= 604; p++) { const s = pst(p), n = C[p] || 0;
+    if ((k === "ok" && s === "ok") || (k === "warn" && s === "warn") || (k === "bad" && s === "bad") || (k === "none" && !s) || (k === "nodl" && !n) || (k === "fade" && fadeOf(p)) || (k === "has" && n >= 2) || (k === "ham" && n === 1)) out.push(p); }
+  return out;
+}
+function vPageLists(){
+  const k = ui.plist || "ok", cnt = Object.fromEntries(PLC.map(([x]) => [x, plistPages(x).length])), L = plistPages(k), byJ = {};
+  L.forEach(p => (byJ[juzOfPage(p)] = byJ[juzOfPage(p)] || []).push(p));
+  const cls = { ok: "c-ok", warn: "c-warn", bad: "c-bad", none: "c-none", nodl: "c-none", fade: "c-ok", has: "c-ok", ham: "c-gold" }[k];
+  return `<div class="card plist"><h3>Sayfalar</h3>
+   <div class="ptabs">${PLC.map(([x, l]) => `<button class="${k === x ? "on" : ""}" data-plist="${x}">${l} <b class="num">${cnt[x]}</b></button>`).join("")}</div>
+   <p class="small muted">${PLD[k]}</p>
+   ${L.length ? Object.entries(byJ).map(([j, P]) => `<div class="kalan"><b class="small">${j}. cüz <span class="muted">(${P.length})</span></b> <span class="small">${rangesOf(P).map(([a, b]) => `<button class="chip ${cls}" data-open="${a}">${a === b ? a : a + "–" + b}</button>`).join(" ")}</span></div>`).join("") : `<p class="empty">Bu grupta sayfa yok.</p>`}
+   ${L.length && (k === "bad" || k === "warn" || k === "fade" || k === "nodl") ? `<div class="row"><button class="small" data-pldl="${L.slice(0, 20).join(",")}">İlk ${Math.min(20, L.length)} sayfayı dinletmeye aç</button></div>` : ""}</div>`;
+}
 
 /* ===== Kişisel ezber analizi ===== */
 function vAnaliz(){
@@ -3521,6 +3542,8 @@ document.addEventListener("click", e => {
   if (a.ekmark) { const p = ui.page, pg = S.pages[p] || (S.pages[p] = {}); if (pg.ek && pg.ek[a.ekmark]) { delete pg.ek[a.ekmark]; mark("pages"); } else ekAdd({ k: a.ekmark, f: p, t: p }); return render(); }
   if (a.ekdel) { ekDel(a.ekdel); return render(); }
   if (a.juzgo) { ui.tSeg = "cuz"; ui.juzSel = +a.juzgo; return go("takip"); }
+  if (a.plist) { ui.plist = a.plist; return render(); }
+  if (a.pldl) { const L = a.pldl.split(",").map(Number); dlOpen(L[0], L[0]); ui.dl.t = Math.min(604, L[0] + 9); return go("bugun"); }
   if (a.dsumdet) { ui.dsumDet = ui.dsumDet === a.dsumdet ? null : a.dsumdet; return render(); }
   if (a.nmzopen) { ui.nmz = ui.nmz === a.nmzopen ? null : a.nmzopen; return render(); }
   if (a.dlday) { dlOpen(); ui.dl.d = a.dlday; if (ui.tab !== "bugun" && a.dlday === TODAY) return go("bugun"); render(); const el = $("#dlform"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
