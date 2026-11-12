@@ -529,6 +529,10 @@ body.hasaudio{padding-bottom:calc(230px + env(safe-area-inset-bottom,0px))}
 details.perr{padding:6px 0;border-bottom:1px solid var(--line)}details.perr summary{cursor:pointer}details.perr .small{padding:3px 0 3px 8px}.ystack{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .pnote{margin-top:8px}
 
+.dlform{border-color:var(--accent)}.dlerr{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}.dlerr .small{flex:1;min-width:0}
+.dladd{background:var(--sheet);border:1px dashed var(--line);border-radius:12px;padding:10px;margin:8px 0;display:flex;flex-direction:column;gap:8px}.dladd .chips{flex-wrap:wrap}
+.dlrow{padding:4px 0}
+
 @media (max-width:430px){.grid3{grid-template-columns:1fr 1fr}.methods{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.stats.s3{grid-template-columns:repeat(3,1fr)}.juzgrid{grid-template-columns:repeat(5,1fr)}}
 @media (max-width:360px){.grid2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
@@ -979,7 +983,7 @@ const docKeyOfDay = d => "d-" + d.slice(0, 7);
 function mark(...keys){ keys.forEach(k => { dirty.add(k); if (k.startsWith("tip-")) tipSave(k.slice(4)); }); persist(); }
 function markDay(d){ mark(docKeyOfDay(d)); }
 function bundle(k){
-  if (k === "core") return { settings: S.settings, plan: S.plan, planHist: S.planHist, weeks: S.weeks, quiz: S.quiz.slice(-300), bm: S.bm, muk: S.muk || null, share: !!S.share, shareName: S.shareName || "", imp: (S.imp || []).slice(-500), goals: S.goals || null, cardNew: S.cardNew || null, telafi: S.telafi || null, gen: S.gen || null, mode: S.mode || "plan", modeFrom: S.modeFrom || "", sepetGoal: S.sepetGoal || 20, remind: S.remind || null, whoNames: S.whoNames || [], light: S.light || null, odevDone: S.odevDone || {}, ver: S.ver || {} };
+  if (k === "core") return { settings: S.settings, plan: S.plan, planHist: S.planHist, weeks: S.weeks, quiz: S.quiz.slice(-300), bm: S.bm, muk: S.muk || null, share: !!S.share, shareName: S.shareName || "", imp: (S.imp || []).slice(-500), goals: S.goals || null, cardNew: S.cardNew || null, telafi: S.telafi || null, gen: S.gen || null, dinlet: S.dinlet || [], lastWho: S.lastWho || "", lastHow: S.lastHow || "", dlWho: S.dlWho || [], mode: S.mode || "plan", modeFrom: S.modeFrom || "", sepetGoal: S.sepetGoal || 20, remind: S.remind || null, whoNames: S.whoNames || [], light: S.light || null, odevDone: S.odevDone || {}, ver: S.ver || {} };
   if (k === "srs") return S.srs;
   if (k === "recs") return S.recCloud || {};
   if (k.startsWith("tip-")) return S.tips[k.slice(4)] || null;
@@ -1055,7 +1059,7 @@ function errForm(prefill){
    <label>Ne okudum<input id="ef-r" placeholder="Yanlış okunan kısım"></label><label>Doğrusu<input id="ef-c" placeholder="Doğru okunuş"></label></div>
    ${AUDIO && AUDIO.id ? `<p class="small gold">Çalan kayda bağlanacak (${fmtSec(($("#aplayer") || {}).currentTime || 0)}).</p>` : ""}<button class="primary" type="submit">Hatayı kaydet</button></form>`;
 }
-const ERRK = [["kelime", "Kelime değişikliği"], ["atlama", "Atlama / ekleme"], ["mutesabih", "Müteşabihe kayma"], ["takilma", "Takılma / dürtülme"], ["tecvid", "Tecvid hatası"], ["hareke", "Hareke"], ["gecis", "Sayfa / sure geçişi"]];
+const ERRK = [["kelime", "Kelime değişikliği"], ["atlama", "Atlama / ekleme"], ["mutesabih", "Müteşabihe kayma"], ["takilma", "Takılma / dürtülme"], ["tecvid", "Tecvid hatası"], ["hareke", "Hareke"], ["gecis", "Sayfa / sure geçişi"], ["unutma", "Unutma / hatırlatıldı"], ["galat", "Galat (yanlış okuma)"], ["yer", "Yer kaçırma (başka yere geçme)"]];
 const ERRN = Object.fromEntries(ERRK);
 
 /* ---------- gün görünümü (Bugün + Takvim) ---------- */
@@ -1068,7 +1072,7 @@ function dayView(d){
   return `<div class="card">
    <div class="row between"><h3>${esc(pf.info || "Plan")}</h3><span class="small muted num">${done}/${parts.length} · ${Math.round(total)} sayfa · ~${est(total)}</span></div>
    <div class="bar"><i style="width:${parts.length ? done / parts.length * 100 : 0}%"></i></div>
-   ${parts.length ? parts.map(p => { const k = partKey(p), K = KIND[p.kind] || KIND.tekrar, on = !!x.done[k]; return `<div class="check ${on ? "done" : ""}"><input type="checkbox" id="pt-${esc(k)}" data-part="${esc(k)}" ${on ? "checked" : ""} aria-label="${esc(p.lab)}"><label class="t" for="pt-${esc(k)}"><span class="kind ${K[1]}">${K[0]}</span>${yolChip(p.yol)} <b>${esc(p.lab)}</b><br><span class="small muted num">${Math.round(partPages(p))} sayfa · ~${est(partPages(p))}</span></label>${p.yol === "kayit" ? `<button class="small" data-recnewr="${p.f}-${p.t}">● Kaydet</button>` : ""}<button class="ghost small" data-open="${p.f}">Aç</button></div>`; }).join("") : `<p class="empty">Bu gün için plan yok.</p>`}
+   ${parts.length ? parts.map(p => { const k = partKey(p), K = KIND[p.kind] || KIND.tekrar, on = !!x.done[k]; return `<div class="check ${on ? "done" : ""}"><input type="checkbox" id="pt-${esc(k)}" data-part="${esc(k)}" ${on ? "checked" : ""} aria-label="${esc(p.lab)}"><label class="t" for="pt-${esc(k)}"><span class="kind ${K[1]}">${K[0]}</span>${yolChip(p.yol)} <b>${esc(p.lab)}</b><br><span class="small muted num">${Math.round(partPages(p))} sayfa · ~${est(partPages(p))}</span></label>${p.yol === "kayit" ? `<button class="small" data-recnewr="${p.f}-${p.t}">● Kaydet</button>` : ""}${p.yol === "dinlet" ? `<button class="small" data-dlopen="${p.f}-${p.t}">Dinlettim…</button>` : ""}<button class="ghost small" data-open="${p.f}">Aç</button></div>`; }).join("") : `<p class="empty">Bu gün için plan yok.</p>`}
   </div>
   <div class="card"><h3>Süre</h3>
    <div class="grid3"><label>Saat<input type="number" min="0" inputmode="numeric" id="dm-h" value="${Math.floor((x.min || 0) / 60)}"></label><label>Dakika<input type="number" min="0" max="59" inputmode="numeric" id="dm-m" value="${(x.min || 0) % 60}"></label><label>Toplam<output class="num big2">${fmtMin(x.min)}</output></label></div>
@@ -1107,7 +1111,7 @@ function vBugun(){
   return `<div class="card hero"><span class="k">${sepetOn() ? "Ezber sepeti · programsız" : esc(S.plan.name || stageName(S.plan.stages[0]))}</span><span class="big">${sepetOn() ? sepetCounts().ok + " sağlam · " + (604 - sepetCounts().ok) + " kalan" : esc(pf.info || "")}</span>
    <div class="row between small"><span>${trD(TODAY)}</span><span class="num">${streak()} gün kesintisiz</span></div>
    <div class="row small num" style="gap:16px"><span>Bu hafta: ${fmtMin(wmin)}</span><span>${wpg} sayfa</span></div></div>
-   ${vStages()}${vOdevCard()}${sepetOn() ? vSepetToday() : vSmartPlan()}${dayView(TODAY)}`;
+   ${vStages()}${vOdevCard()}${vDlToday()}${sepetOn() ? vSepetToday() : vSmartPlan()}${dayView(TODAY)}`;
 }
 function vTakvim(){
   const [y, m] = ui.cal.split("-").map(Number), first = new Date(y, m - 1, 1), lead = (first.getDay() + 6) % 7, nd = new Date(y, m, 0).getDate();
@@ -1670,7 +1674,7 @@ function vDinle(){
        <label>Not<input id="rn-${r.id}" data-recnote="${r.id}" value="${esc(r.n)}" placeholder="Bu okuma hakkında not"></label>
        <h4>Bu kayıtta işaretlenen hatalar (${E.length})</h4>
        ${E.length ? E.sort((a, b) => a.x.ts - b.x.ts).map(o => `<div class="item"><div class="t"><span class="small"><button class="tsbtn num" data-seek="${r.id}|${o.x.ts}">${fmtSec(o.x.ts)}</button> <b>s. ${o.e.p}</b> · ${esc(o.e.i >= 0 ? refStr(o.e.i) : "")} <span class="chip c-none">${esc(ERRN[o.e.k] || o.e.k)}</span></span>${o.e.r || o.e.cr ? `<span class="small">${o.e.r ? `<span class="danger">${esc(o.e.r)}</span> → ` : ""}<b>${esc(o.e.cr || "")}</b></span>` : ""}</div><button class="ghost small" data-recunlink="${r.id}|${o.e.id}">Kayıttan çıkar</button></div>`).join("") : `<p class="small muted">Dinlerken ayete dokunup "Hata ekle" dediğinde hata bu kayda, saniyesiyle bağlanır.</p>`}
-       ${recCmp(r)}<div class="row"><button class="primary small" data-recplay="${r.id}">▶ Dinle ve takip et</button>${r.cloud ? "" : `<button class="small" data-recbak="${r.id}" ${ui.upBusy ? "disabled" : ""}>${ui.upBusy === r.id ? "Yükleniyor…" : "☁ Buluta yedekle"}</button>`}<button class="ghost small" data-recshare="${r.id}">Telefona kaydet / paylaş</button><button class="ghost small" data-recref="${r.id}">${r.ref ? "Referanslıktan çıkar" : "Referans olarak işaretle"}</button><button class="ghost small" data-open="${r.p}">Sayfayı aç</button>${confirmBtn("rec:" + r.id, "Kaydı sil")}</div></div>` : ""}</div>`; };
+       ${recCmp(r)}<div class="row"><button class="primary small" data-recplay="${r.id}">▶ Dinle ve takip et</button>${r.cloud ? "" : `<button class="small" data-recbak="${r.id}" ${ui.upBusy ? "disabled" : ""}>${ui.upBusy === r.id ? "Yükleniyor…" : "☁ Buluta yedekle"}</button>`}<button class="small" data-recdl="${r.id}">Dinletme olarak işle</button><button class="ghost small" data-recshare="${r.id}">Telefona kaydet / paylaş</button><button class="ghost small" data-recref="${r.id}">${r.ref ? "Referanslıktan çıkar" : "Referans olarak işaretle"}</button><button class="ghost small" data-open="${r.p}">Sayfayı aç</button>${confirmBtn("rec:" + r.id, "Kaydı sil")}</div></div>` : ""}</div>`; };
   if (!DRAFT && !draftCheck.t) { draftCheck.t = 1; draftCheck(); }
   return `<section>${draftCard()}${ui.recBad ? `<div class="card warnc"><p class="small"><b>${ui.recBad} eski kaydın sesi bu telefonda okunamadı.</b> iPhone, eski sürümde kaydedilen bazı sesleri uygulama kapanınca boşaltmış. Yeni kayıtlar artık kalıcı saklanıyor.</p></div>` : ""}<div class="row between"><h2>Ses kayıtları</h2><button class="primary" data-act="newrec">${ui.newRec ? "Kapat" : "● Yeni kayıt"}</button></div>
    ${ui.newRec || MREC ? recNew() : ""}
@@ -2547,10 +2551,86 @@ function vGenel(){
     <p class="tiny">Renk son dinletmeden: yeşil 0–2 hata, sarı 3–6 hata, kırmızı fazlası. Dinletme kaydı Takip > Cüzler'den ya da plandaki "Dinleterek" parçalardan gelir.</p></div>
    <div class="card"><h3>Son 30 gün</h3><div class="stats"><div class="stat"><b class="num">${r30}</b><span>sayfa okundu</span></div><div class="stat"><b class="num">${fmtMin(m30)}</b><span>süre</span></div><div class="stat"><b class="num">${streak()}</b><span>gün seri</span></div></div>
     <div class="ystack">${Object.entries(yolN).map(([y, n]) => `<span class="kind ${YOL[y][1]}">${YOL[y][0]}: ${n} s.</span>`).join(" ")}</div></div>
+   <div class="card"><div class="row between"><h3>Son dinletmeler</h3><button class="small" data-act="dlnew2">+ Dinlettim</button></div>${vDlList(15)}</div>
    <div class="card"><h3>Hatalar (${totE})</h3><div class="chips">${ERRK.map(([k, l]) => byK[k] ? `<span class="chip c-bad">${esc(l.split(" ")[0])} ${byK[k]}</span>` : "").join("")}</div>
     ${topP.length ? topP.map(([p, L, n]) => `<details class="perr"><summary><span class="chip c-bad num">${n}</span> <b>s. ${p}</b> <span class="small muted">${esc(SN(ref(pStart(p))[0]))} · ${juzOfPage(p)}. cüz</span></summary>${L.slice(0, 12).map(e => `<div class="small">${errDetail(e)}</div>`).join("")}<button class="ghost small" data-open="${p}">Sayfayı aç</button></details>`).join("") : `<p class="small muted">Hata kaydı yok.</p>`}</div>
    ${risk.length ? `<div class="card"><h3>Unutulmaya yüz tutanlar</h3><p class="small">${risk.map(([p, k]) => `<button class="chip c-${k.r >= .8 ? "bad" : "warn"}" data-open="${p}">s. ${p}${k.days != null ? " · " + k.days + " gün" : ""}</button>`).join(" ")}</p></div>` : ""}
    <div class="row"><button class="ghost small" data-tab="takip">Ayrıntılı takip</button><button class="ghost small" data-tab="ist">İstatistik ve rozetler</button><button class="ghost small" data-tab="rapor">Hoca raporu</button></div></section>`;
+}
+
+/* ===== Dinletme oturumu: her yere bağlı tek kayıt ===== */
+const DLHOW = [["yuz", "Yüz yüze"], ["tel", "Telefonla"], ["kayit", "Ses kaydıyla"], ["kendi", "Kendimi dinleyerek"]];
+const DLN = Object.fromEntries(DLHOW);
+const HEAVY = { takilma: 1, unutma: 1, yer: 1, atlama: 1 };
+function dlWhoList(){ const s = new Set(S.dlWho || []); (S.dinlet || []).forEach(x => x.who && s.add(x.who)); ["Hocam"].forEach(n => s.add(n)); return [...s]; }
+function dlDefaultRange(){
+  const x = S.days[TODAY] || { done: {} }, P = partsFor(TODAY).parts.filter(p => p.kind !== "onarim");
+  const open = P.find(p => !x.done[partKey(p)]) || P[0];
+  if (open) return [open.f, open.t];
+  const sg = sepetOn() ? sepetSuggest() : null; if (sg && sg.tekrar.length) { const r = rangesOf(sg.tekrar)[0]; return r; }
+  return [ui.page || 1, ui.page || 1];
+}
+function dlOpen(f, t, extra){ const [a, b] = f ? [f, t || f] : dlDefaultRange(); ui.dl = Object.assign({ f: a, t: b, who: S.lastWho || "", how: S.lastHow || "yuz", min: "", n: "", errs: [], ek: { k: "takilma", p: a, i: "", r: "", cr: "" } }, extra || {}); }
+/* Kaydet: cüz kayıtları, hata defteri, sayfa durumları, okunanlar, plan parçaları */
+function dlSave(o){
+  const id = uid(), d = o.d || TODAY, f = Math.min(o.f, o.t), t = Math.max(o.f, o.t), who = (o.who || "").trim();
+  const errIds = [];
+  (o.errs || []).forEach(e => { if (e.id && S.err.some(x => x.id === e.id)) { errIds.push(e.id); return; }
+    const p = +e.p || f, i = e.i !== "" && e.i != null ? +e.i : -1, ne = { id: uid(), p, i, a: i >= 0 ? refStr(i) : "", k: e.k, r: e.r || "", cr: e.cr || "", c: 1, d, by: who, sid: id };
+    S.err.unshift(ne); errIds.push(ne.id); });
+  const E = S.err.filter(e => errIds.includes(e.id)), perP = {};
+  E.forEach(e => { const q = perP[e.p] || (perP[e.p] = { n: 0, heavy: 0 }); q.n += e.c || 1; if (HEAVY[e.k]) q.heavy += e.c || 1; });
+  const pages = []; for (let p = f; p <= t; p++) pages.push(p);
+  pages.forEach(p => { const pg = S.pages[p] || (S.pages[p] = {}); pg.dl = d; const q = perP[p];
+    if (!q) pg.st = "ok"; else { pg.c = (pg.c || 0) + q.n; pg.st = q.n >= 3 || q.heavy >= 2 ? "bad" : "warn"; } });
+  // cüz kayıtları (Takip, Analiz, rapor, hoca paylaşımı bunları kullanır)
+  const byJ = {}; pages.forEach(p => { const j = juzOfPage(p); (byJ[j] = byJ[j] || []).push(p); });
+  Object.entries(byJ).forEach(([j, L]) => { const EJ = E.filter(e => L.includes(e.p)), tk = EJ.filter(e => e.k === "takilma" || e.k === "unutma").reduce((s, e) => s + (e.c || 1), 0), h = EJ.reduce((s, e) => s + (e.c || 1), 0) - tk;
+    (S.juz[j] || (S.juz[j] = { logs: [] })).logs.push({ id: id + "-" + j, sid: id, d, h, t: tk, m: o.min ? Math.round(+o.min * L.length / pages.length) : 0, p: "s. " + rangeTxt(rangesOf(L)), n: o.n || "", w: who + (o.how ? " · " + DLN[o.how] : "") }); });
+  // okunanlar ve günün plan parçaları
+  if (d <= TODAY) { const x = dayRec(d); x.read = x.read || []; pages.forEach(p => { if (!x.read.includes(p)) x.read.push(p); });
+    if (o.min) x.min = (x.min || 0) + (+o.min);
+    const pf = partsFor(d); let ch = false; pf.parts.forEach(pt => { const pl = partPageList(pt); if (pl.length && pl.every(p => p >= f && p <= t) && !x.done[partKey(pt)]) { x.done[partKey(pt)] = true; ch = true; } });
+    if (ch && d <= TODAY) { const wasDyn = x.snap && x.snap.dyn; x.snap = { parts: pf.parts, info: pf.info, pk: planPK(), dyn: wasDyn }; }
+    markDay(d); }
+  (S.dinlet = S.dinlet || []).unshift({ id, d, f, t, who, how: o.how || "", min: +o.min || 0, n: o.n || "", errs: errIds, rec: o.rec || "" });
+  if (who) { S.lastWho = who; S.dlWho = S.dlWho || []; if (!S.dlWho.includes(who)) S.dlWho.push(who); } if (o.how) S.lastHow = o.how;
+  mark("core", "pages", "err", "juz"); ui.lrDirty = true;
+  return { id, nErr: E.length, okPages: pages.filter(p => !perP[p]).length, pages: pages.length };
+}
+function dlDelete(id){
+  const s = (S.dinlet || []).find(x => x.id === id); if (!s) return;
+  S.dinlet = S.dinlet.filter(x => x.id !== id); S.err = S.err.filter(e => e.sid !== id);
+  for (const j in S.juz) S.juz[j].logs = (S.juz[j].logs || []).filter(l => l.sid !== id);
+  mark("core", "err", "juz"); toast("Dinletme kaydı silindi (sayfa durumları olduğu gibi kaldı)");
+}
+function ayahOpts(p, cur){ return `<option value="">Ayet (isteğe bağlı)</option>` + range(pStart(p), pEnd(p)).map(i => opt(i, refStr(i) + (TXT ? " · " + AR(i).split(" ").slice(0, 3).join(" ") : ""), cur)).join(""); }
+function vDlForm(){
+  const D = ui.dl; if (!D) return "";
+  const ek = D.ek, pg = Math.min(Math.max(+ek.p || D.f, Math.min(D.f, D.t)), Math.max(D.f, D.t));
+  const errRow = (e, k) => `<div class="dlerr"><span class="chip c-bad">${esc((ERRN[e.k] || e.k).split(" ")[0])}</span><span class="small">s. ${e.p}${e.i !== "" && e.i != null ? " · " + esc(refStr(+e.i)) : ""}${e.r ? ` · <span class="ar2" lang="ar">${esc(e.r)}</span>` : ""}${e.cr ? " → " + esc(e.cr) : ""}</span><button class="ghost small" data-dlerrdel="${k}" aria-label="Hatayı sil">×</button></div>`;
+  return `<div class="card dlform" id="dlform"><div class="row between"><h3>Dinletme kaydı</h3><button class="ghost small" data-act="dlclose">Kapat</button></div>
+   <div class="grid3"><label>Sayfadan<input type="number" id="dl-f" min="1" max="604" value="${D.f}" inputmode="numeric"></label><label>Sayfaya<input type="number" id="dl-t" min="1" max="604" value="${D.t}" inputmode="numeric"></label><label>Süre (dk)<input type="number" id="dl-min" min="0" value="${esc(D.min)}" inputmode="numeric"></label></div>
+   <div class="grid2"><label>Kime dinlettin<input id="dl-who" list="dl-wl" value="${esc(D.who)}" placeholder="Hocam, Ahmet…" autocomplete="off"></label><label>Nasıl<select id="dl-how">${DLHOW.map(([v, l]) => opt(v, l, D.how)).join("")}</select></label></div><datalist id="dl-wl">${dlWhoList().map(w => `<option value="${esc(w)}">`).join("")}</datalist>
+   <h4>Hatalar (${D.errs.length})</h4>${D.errs.map(errRow).join("") || `<p class="small muted">Hata yoksa doğrudan kaydet; bütün sayfalar <b>sağlam dinletildi</b> olur.</p>`}
+   <div class="dladd"><div class="chips">${ERRK.map(([k, l]) => `<button class="fchip ${ek.k === k ? "on" : ""}" data-dlk="${k}">${esc(l.split(" ")[0].replace("/", ""))}</button>`).join("")}</div>
+    <div class="grid2"><label>Sayfa<select id="dle-p">${range(Math.min(D.f, D.t), Math.max(D.f, D.t)).map(p => opt(p, "s. " + p, pg)).join("")}</select></label><label>Ayet<select id="dle-i">${TXT ? ayahOpts(pg, ek.i) : `<option value="">—</option>`}</select></label></div>
+    <div class="grid2"><label>Okuduğun / kelime<input id="dle-r" value="${esc(ek.r)}" placeholder="isteğe bağlı"></label><label>Doğrusu<input id="dle-cr" value="${esc(ek.cr)}" placeholder="isteğe bağlı"></label></div>
+    <button class="small" data-act="dlerradd">+ ${esc(ERRN[ek.k] || ek.k)} ekle</button></div>
+   <label>Not<input id="dl-n" value="${esc(D.n)}" placeholder="Hocanın söyledikleri, dikkat edilecek yer"></label>
+   <button class="primary wide" data-act="dlsave">${D.errs.length ? "Kaydet (" + D.errs.length + " hata)" : "Hatasız dinlettim, kaydet"}</button>
+   <p class="tiny">Kaydedince: hatasız sayfalar sağlam olur; hata olan sayfa ortaya, 3+ hata ya da 2+ takılma/unutma varsa zayıfa düşer. Cüz dinletmeleri (Takip), Hata defteri, Ezber sepeti, Analiz ve hoca raporu birlikte güncellenir; günün plan parçası bu sayfaları kapsıyorsa tamamlanmış sayılır.</p></div>`;
+}
+function vDlToday(){
+  const L = (S.dinlet || []).filter(x => x.d === TODAY);
+  return `${ui.dl ? vDlForm() : `<div class="card dlbar"><div class="row between"><span><b>Dinletme</b> <span class="small muted">${L.length ? "bugün " + L.length + " kez" : "bugün yok"}</span></span><button class="primary small" data-act="dlnew">+ Dinlettim</button></div>
+   ${L.map(x => `<div class="small dlrow"><span class="chip ${x.errs.length ? "c-warn" : "c-ok"}">${x.errs.length ? x.errs.length + " hata" : "Hatasız"}</span> s. ${x.f}${x.t !== x.f ? "–" + x.t : ""} · ${esc(x.who || "—")} · ${DLN[x.how] || ""}</div>`).join("")}</div>`}`;
+}
+function vDlList(n){
+  const L = (S.dinlet || []).slice(0, n || 20); if (!L.length) return `<p class="small muted">Henüz dinletme kaydı yok. Bugün ekranındaki "+ Dinlettim" ile ekle.</p>`;
+  return L.map(x => { const E = S.err.filter(e => x.errs.includes(e.id));
+    return `<details class="perr"><summary><span class="chip ${E.length ? "c-warn" : "c-ok"}">${E.length ? E.length + " hata" : "Hatasız"}</span> <b>s. ${x.f}${x.t !== x.f ? "–" + x.t : ""}</b> <span class="small muted">${trD(x.d)} · ${esc(x.who || "—")}${x.how ? " · " + DLN[x.how] : ""}</span></summary>
+     ${E.map(e => `<div class="small">${errDetail(e)}</div>`).join("")}${x.n ? `<div class="small gold">${esc(x.n)}</div>` : ""}<div class="row"><button class="ghost small" data-open="${x.f}">Sayfayı aç</button><button class="ghost small" data-dldel="${x.id}">Kaydı sil</button></div></details>`; }).join("");
 }
 
 /* ===== Kişisel ezber analizi ===== */
@@ -2892,7 +2972,7 @@ function vTakip(){
   const sel = ui.juzSel; let det = "";
   if (sel) { const logs = ((S.juz[sel] || {}).logs || []).slice().sort((a, b) => a.d < b.d ? 1 : -1), [a, b] = juzPages(sel);
     det = `<div class="card" id="jdet"><div class="row between"><h2>${sel}. cüz</h2>${chip(colorOf(lastLog(sel)))}</div><div class="small muted">Sayfa ${a}–${b} · ${esc(refStr(JZ[sel - 1]))} ile başlar · ${mutCountJuz[sel]} müteşabih</div>
-     <form id="logform" class="col"><h3>Dinletme kaydı</h3><div class="grid2"><label>Tarih<input type="date" id="lg-d" value="${TODAY}"></label><label>Kime / nasıl<input id="lg-w" placeholder="Hoca, arkadaş, ses kaydı"></label>
+     <form id="logform" class="col"><h3>Dinletme kaydı</h3><p class="small">Sayfa sayfa ve hata hata girmek için <button type="button" class="ghost small" data-dlopen="${juzPages(+ui.juzSel)[0]}-${juzPages(+ui.juzSel)[1]}">Ayrıntılı dinletme kaydı</button>. Aşağıdaki kısa form sadece sayı tutar; hatasız girersen cüzün sayfaları sağlam sayılır.</p><div class="grid2"><label>Tarih<input type="date" id="lg-d" value="${TODAY}"></label><label>Kime / nasıl<input id="lg-w" placeholder="Hoca, arkadaş, ses kaydı"></label>
      <label>Hata<input type="number" id="lg-h" min="0" value="0" inputmode="numeric"></label><label>Takılma / dürtülme<input type="number" id="lg-t" min="0" value="0" inputmode="numeric"></label>
      <label>Süre (dk)<input type="number" id="lg-m" min="0" inputmode="numeric" placeholder="35"></label><label>Zayıf sayfalar<input id="lg-p" placeholder="${a + 3}, ${a + 9}"></label></div>
      <label>Not<input id="lg-n"></label><p class="small muted">Yeşil: 0–2 hata ve takılma yok · Sarı: 3–6 hata ya da 1–2 takılma · Kırmızı: daha fazlası</p><button class="primary" type="submit">Kaydet</button></form>
@@ -3138,7 +3218,12 @@ document.addEventListener("click", e => {
   if (a.sp) { sepetTap(+a.sp); return render(); }
   if (a.sj) { const [x, y] = juzPages(+a.sj), br = ui.brush ?? "ok"; for (let p = x; p <= y; p++) setPst(p, br); mark("pages"); toast(a.sj + ". cüz: " + PST[br]); return render(); }
   if (a.brush != null) { ui.brush = a.brush; ui.rangeA = null; return render(); }
-  if (a.sdl) { const L = a.sdl.split(",").map(Number); addRead(L); markDinlet(L); ui.lastRead = L; toast(L.length + " sayfa dinletildi olarak işlendi"); return render(); }
+  if (a.sdl) { const L = a.sdl.split(",").map(Number); dlOpen(Math.min(...L), Math.max(...L)); return go("bugun"); }
+  if (a.dlopen) { const [f2, t2] = a.dlopen.split("-").map(Number); dlOpen(f2, t2); if (ui.tab !== "bugun") return go("bugun"); render(); const el = $("#dlform"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  if (a.dlk) { ui.dl.ek.k = a.dlk; return render(); }
+  if (a.dlerrdel != null) { ui.dl.errs.splice(+a.dlerrdel, 1); return render(); }
+  if (a.dldel) { dlDelete(a.dldel); return render(); }
+  if (a.recdl) { const r = (RECS || []).find(q => q.id === a.recdl); if (!r) return; dlOpen(r.p, r.p2 || r.p, { who: r.who && r.who !== "Ben" ? r.who : "Kendi kaydım", how: r.who && r.who !== "Ben" ? "kayit" : "kendi", errs: recErrs(r).map(o => ({ id: o.e.id, k: o.e.k, p: o.e.p, i: o.e.i >= 0 ? o.e.i : "", r: o.e.r || "", cr: o.e.cr || "" })), rec: r.id }); return go("bugun"); }
   if (a.recnewr) { const [f2, t2] = a.recnewr.split("-").map(Number); ui.newRec = true; ui.rc = { p: f2, p2: t2, n: "", who: "", ref: false }; return go("dinle"); }
   if (a.stnav) { const c = $("#stcar"); if (c) c.scrollBy({ left: +a.stnav * c.clientWidth * 0.86, behavior: "smooth" }); return; }
   if (a.sread) { const L = a.sread.split(",").map(Number); addRead(L); ui.lastRead = L; toast(L.length + " sayfa okundu"); return render(); }
@@ -3196,6 +3281,11 @@ document.addEventListener("click", e => {
     draftdel(){ DRAFT = null; draftClear(); },
     icsexp(){ icsExport(); return true; },
     recsharesel(){ recShare(Object.keys(ui.recSel || {}).filter(k => ui.recSel[k])); return true; },
+    dlnew(){ dlOpen(); },
+    dlnew2(){ dlOpen(); go("bugun"); return true; },
+    dlclose(){ ui.dl = null; },
+    dlerradd(){ const D = ui.dl, ek = D.ek; D.errs.push({ k: ek.k, p: +ek.p || D.f, i: ek.i, r: (ek.r || "").trim(), cr: (ek.cr || "").trim() }); ek.r = ""; ek.cr = ""; ek.i = ""; },
+    dlsave(){ const D = ui.dl; if (!D || !(+D.f)) return true; const r = dlSave(D); ui.dl = null; toast(r.nErr ? r.pages + " sayfa işlendi · " + r.nErr + " hata deftere yazıldı · " + r.okPages + " sayfa sağlam" : r.pages + " sayfa sağlam dinletildi"); },
     pnadd(){ const p = Math.max(1, Math.min(604, +($("#pn-p") || {}).value || 0)), n = (($("#pn-t") || {}).value || "").trim(); if (!p || !n) { toast("Sayfa ve not yaz"); return true; } const pg = S.pages[p] || (S.pages[p] = {}); pg.n = n; mark("pages"); toast("s. " + p + " notu kaydedildi"); },
     sreadrange(){ const f = Math.max(1, Math.min(604, +($("#sr-f") || {}).value || 0)), t = Math.max(1, Math.min(604, +($("#sr-t") || {}).value || f)); if (!f) return true; const L = []; for (let p = Math.min(f, t); p <= Math.max(f, t); p++) L.push(p); addRead(L); ui.lastRead = L; toast(L.length + " sayfa bugün okundu olarak işlendi"); },
     sreadundo(){ if (ui.lastRead) { delRead(ui.lastRead); ui.lastRead = null; } else toast("Geri alınacak bir şey yok"); },
@@ -3226,7 +3316,7 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("change", e => {
   const t = e.target, a = t.dataset, id = t.id;
-  if (a.part) { const d = ui.tab === "bugun" ? TODAY : ui.day, x = dayRec(d); x.done[a.part] = t.checked; { const pt0 = partsFor(d).parts.find(q => partKey(q) === a.part); if (pt0 && pt0.yol === "dinlet" && t.checked) markDinlet(partPageList(pt0), d); } if (d <= TODAY) { const pf = partsFor(d); const wasDyn = x.snap && x.snap.dyn; x.snap = { parts: pf.parts, info: pf.info, pk: planPK(), dyn: wasDyn };
+  if (a.part) { const d = ui.tab === "bugun" ? TODAY : ui.day, x = dayRec(d); x.done[a.part] = t.checked; { const pt0 = partsFor(d).parts.find(q => partKey(q) === a.part); if (pt0 && pt0.yol === "dinlet" && t.checked && !(S.dinlet || []).some(z => z.d === d && z.f <= pt0.f && z.t >= pt0.t)) { dlSave({ d, f: pt0.f, t: pt0.t, who: S.lastWho || "", how: S.lastHow || "yuz", errs: [] }); toast("Hatasız dinletildi sayıldı; hata olduysa \"+ Dinlettim\" ile ayrıntı gir"); } } if (d <= TODAY) { const pf = partsFor(d); const wasDyn = x.snap && x.snap.dyn; x.snap = { parts: pf.parts, info: pf.info, pk: planPK(), dyn: wasDyn };
       if (wasDyn && t.checked) { const pt = pf.parts.find(q => partKey(q) === a.part); if (pt) { partPageList(pt).forEach(q => { const e = S.srs[q] || [1, d], bad = S.pages[q] && S.pages[q].st === "bad"; const nb = bad ? 1 : Math.min(5, e[0] + 1); S.srs[q] = [nb, addDays(d, SRS_INT[nb])]; }); mark("srs"); } } } markDay(d); render(); if (t.checked && dayStatus(d) === "full") toast("Günün planı tamam"); return; }
   const day = ui.tab === "bugun" ? TODAY : ui.day;
   if (id === "dm-h" || id === "dm-m") { const x = dayRec(day); x.min = Math.max(0, (+$("#dm-h").value || 0) * 60 + (+$("#dm-m").value || 0)); markDay(day); return render(); }
@@ -3236,6 +3326,11 @@ document.addEventListener("change", e => {
   if (id === "cal-m" || id === "cal-y") { ui.cal = $("#cal-y").value + "-" + pad($("#cal-m").value); return render(); }
   if (id === "cal-go" && t.value) { ui.day = t.value; ui.cal = t.value.slice(0, 7); return render(); }
   if (id === "pg-r") return openPage(+t.value);
+  if (ui.dl && /^(dl|dle)-/.test(id)) { const D = ui.dl, ek = D.ek, val = t.value;
+    if (id === "dl-f" || id === "dl-t") { D[id === "dl-f" ? "f" : "t"] = Math.max(1, Math.min(604, +val || 1)); if (id === "dl-f" && D.t < D.f) D.t = D.f; ek.p = Math.min(D.f, D.t); ek.i = ""; return render(); }
+    if (id === "dle-p") { ek.p = +val; ek.i = ""; return render(); }
+    if (id === "dle-i") { ek.i = val; return; } if (id === "dle-r") { ek.r = val; return; } if (id === "dle-cr") { ek.cr = val; return; }
+    if (id === "dl-who") { D.who = val; return; } if (id === "dl-how") { D.how = val; return; } if (id === "dl-min") { D.min = val; return; } if (id === "dl-n") { D.n = val; return; } }
   if (id === "sp-goal") { S.sepetGoal = Math.max(1, Math.min(200, +t.value || 20)); mark("core"); return render(); }
   if (id === "sp-range") { ui.rangeMode = t.checked; ui.rangeA = null; return render(); }
   if (id === "rc-who") { rcv().who = t.value; return; }
@@ -3306,6 +3401,7 @@ document.addEventListener("submit", e => {
   if (f === "mutf") { Object.assign(ui.mq, { juz: v("mq-j"), sur: v("mq-s"), q: v("mq-q"), only: v("mq-o") }); ui.mLimit = 20; return render(); }
   if (f === "mutform") { const ia = parseRef(v("mt-a")), ib = parseRef(v("mt-b")); S.mut.unshift({ id: uid(), g: null, a: ia >= 0 ? refStr(ia) : v("mt-a"), b: ib >= 0 ? refStr(ib) : v("mt-b"), f: v("mt-f"), c: 0, last: "" }); if (ia >= 0) S.mut[0].a = v("mt-a"); if (ib >= 0) S.mut[0].b = v("mt-b"); mark("mut"); render(); return toast("Deftere eklendi"); }
   if (f === "logform") { const j = ui.juzSel; (S.juz[j] || (S.juz[j] = { logs: [] })).logs.push({ id: uid(), d: v("lg-d") || TODAY, h: Math.max(0, +v("lg-h") || 0), t: Math.max(0, +v("lg-t") || 0), m: +v("lg-m") || 0, p: v("lg-p"), n: v("lg-n"), w: v("lg-w") });
+    if (!(+v("lg-h")) && !(+v("lg-t")) && !v("lg-p")) { const [a0, b0] = juzPages(+j); for (let q = a0; q <= b0; q++) { const pg = S.pages[q] || (S.pages[q] = {}); pg.st = "ok"; pg.dl = v("lg-d") || TODAY; } mark("pages"); toast(j + ". cüz hatasız: sayfaları sağlam sayıldı"); }
     v("lg-p").split(/[,\s]+/).map(Number).filter(p => p >= 1 && p <= 604).forEach(p => { const pg = S.pages[p] || (S.pages[p] = {}); pg.c = (pg.c || 0) + 1; if (!pg.st || pg.st === "ok") pg.st = "warn"; mark("pages"); });
     mark("juz"); render(); return toast(j + ". cüz: " + CN[colorOf(lastLog(j))]); }
   if (f === "ef") { Object.assign(ui.eF, { k: v("ef-fk"), juz: v("ef-fj"), from: v("ef-ff"), to: v("ef-ft"), q: v("ef-fq"), star: $("#ef-fs").checked }); return render(); }
