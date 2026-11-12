@@ -196,8 +196,8 @@ summary{cursor:pointer;font-weight:600}details p{margin:6px 0 0;color:var(--mute
 a{color:var(--accent)}
 #back{padding:5px 10px}
 nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--paper);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-nav .in{display:grid;grid-template-columns:repeat(5,1fr);width:100%;max-width:760px}
-nav button{border:none;border-radius:0;background:transparent;padding:9px 2px 10px;font-size:11px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px}
+nav .in{display:grid;grid-template-columns:repeat(6,1fr);width:100%;max-width:760px}
+nav button{border:none;border-radius:0;background:transparent;padding:9px 1px 10px;font-size:10.5px;min-width:0;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px}
 nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav button.on{color:var(--accent)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(78px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:13px;z-index:20;max-width:90vw;text-align:center}
@@ -518,6 +518,17 @@ body.hasaudio{padding-bottom:calc(230px + env(safe-area-inset-bottom,0px))}
 .kalan{padding:6px 0;border-bottom:1px solid var(--line)}.kalan:last-child{border-bottom:0}
 .sgrp{padding:10px 0;border-top:1px solid var(--line)}.sgrp:first-of-type{border-top:0}.sgrp.done{background:var(--gold-soft);border-radius:10px;padding:10px}
 
+.stcar{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:4px 2px 8px;scrollbar-width:none}.stcar::-webkit-scrollbar{display:none}
+.stc{flex:0 0 86%;scroll-snap-align:start;display:flex;flex-direction:column;gap:4px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--sheet);min-width:0}
+.stc.cur{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}.stc.done{opacity:.6}
+.y-dinlet{background:color-mix(in srgb,var(--gold) 25%,transparent);color:var(--ink)}.y-kayit{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--ink)}.y-oku{background:var(--line);color:var(--ink)}
+.ssum{display:flex;flex-direction:column;gap:2px;margin-top:8px}.ssum p{margin:2px 0}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.sbar.sm{height:7px;margin:0;flex:1}.jbars{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 12px;margin-top:8px}.jb{display:flex;align-items:center;gap:6px}.jb span{width:16px}
+.jdls{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin:8px 0}.jdl{padding:4px 0;border-radius:8px;font-size:13px;font-weight:700;display:flex;flex-direction:column;align-items:center;border:0;color:#fff}.jdl small{font-size:9px;font-weight:400;opacity:.9}
+.jdl.c-ok{background:var(--ok)}.jdl.c-warn{background:var(--warn);color:#222}.jdl.c-bad{background:var(--bad)}.jdl.c-none{background:var(--line);color:var(--muted)}
+details.perr{padding:6px 0;border-bottom:1px solid var(--line)}details.perr summary{cursor:pointer}details.perr .small{padding:3px 0 3px 8px}.ystack{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pnote{margin-top:8px}
+
 @media (max-width:430px){.grid3{grid-template-columns:1fr 1fr}.methods{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.stats.s3{grid-template-columns:repeat(3,1fr)}.juzgrid{grid-template-columns:repeat(5,1fr)}}
 @media (max-width:360px){.grid2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
@@ -598,6 +609,13 @@ const S114 = SUR.map((s, k) => [k + 1, (k + 1) + ". " + s[0]]);
 const MENZIL = [[1, 4], [5, 9], [10, 16], [17, 25], [26, 36], [37, 49], [50, 114]];
 
 const PLAN_DEFS = {
+  sayfa: {
+    ad: "Sayfa sayfa (kendi ölçün)", etiket: "Esnek",
+    kisa: "Her gün belirlediğin kadar sayfa sırayla okunur: 1, 2, 5, 10 ya da istediğin sayı. Süre kendiliğinden hesaplanır: 604 sayfa günde 10 sayfayla 61 günde, 5 sayfayla 121 günde biter. Düzenli gidemezsen bitiş tarihi uzar.",
+    uygun: "Kendi temposunu kendi belirlemek isteyen",
+    params: [["n", "Günde kaç sayfa", "num"], ["from", "Başlangıç cüzü", J30], ["to", "Bitiş cüzü", J30]],
+    def: { n: 10, from: 1, to: 30 }
+  },
   hatim: {
     ad: "Hatim döngüsü", etiket: "Klasik",
     kisa: "Seçtiğin cüzleri belirli bir sürede baştan sona okursun. Haftalık, 10 günlük, 15 günlük, aylık ya da 2 aylık olabilir.",
@@ -675,6 +693,10 @@ function buildPlan(type, p){
       else { const [F, T] = juzRange(p.from, p.to), c = splitEven(F, T, n)[pos]; parts = partsForRange(c[0], c[1], "tekrar"); }
       return { parts, info: n + " günlük hatim · " + (pos + 1) + ". gün" };
     }};
+  }
+  if (type === "sayfa") {
+    const [F, T] = juzRange(p.from, p.to), tot = T - F + 1, n = Math.max(1, Math.min(tot, +p.n || 10)), days = Math.ceil(tot / n);
+    return { cycle: days, day(i){ const pos = mod(i, days), a = F + pos * n, b = Math.min(T, a + n - 1); return { parts: partsForRange(a, b, "tekrar"), info: n + " sayfa/gün · " + (pos + 1) + "/" + days + ". gün" }; } };
   }
   if (type === "menzil") {
     return { cycle: 7, day(i){
@@ -807,8 +829,9 @@ function buildProgram(stages){
     for (let k = 0; k < stages.length; k++) {
       const len = L[k];
       if (len == null || i < acc + len || k === stages.length - 1) {
-        const b = buildPlan(stages[k].type, stages[k].p), r = b.day(i - acc);
-        return { parts: r.parts, info: (stages.length > 1 ? "Aşama " + (k + 1) + "/" + stages.length + " · " : "") + r.info, stage: k, dyn: b.dynamic ? b : null };
+        const b = buildPlan(stages[k].type, stages[k].p), r = b.day(i - acc), yol = stages[k].yol || "oku";
+        r.parts.forEach(x => { x.yol = yol; });
+        return { parts: r.parts, yol, info: (stages.length > 1 ? "Aşama " + (k + 1) + "/" + stages.length + " · " : "") + r.info, stage: k, dyn: b.dynamic ? b : null };
       }
       acc += len;
     }
@@ -1045,7 +1068,7 @@ function dayView(d){
   return `<div class="card">
    <div class="row between"><h3>${esc(pf.info || "Plan")}</h3><span class="small muted num">${done}/${parts.length} · ${Math.round(total)} sayfa · ~${est(total)}</span></div>
    <div class="bar"><i style="width:${parts.length ? done / parts.length * 100 : 0}%"></i></div>
-   ${parts.length ? parts.map(p => { const k = partKey(p), K = KIND[p.kind] || KIND.tekrar, on = !!x.done[k]; return `<div class="check ${on ? "done" : ""}"><input type="checkbox" id="pt-${esc(k)}" data-part="${esc(k)}" ${on ? "checked" : ""} aria-label="${esc(p.lab)}"><label class="t" for="pt-${esc(k)}"><span class="kind ${K[1]}">${K[0]}</span> <b>${esc(p.lab)}</b><br><span class="small muted num">${Math.round(partPages(p))} sayfa · ~${est(partPages(p))}</span></label><button class="ghost small" data-open="${p.f}">Aç</button></div>`; }).join("") : `<p class="empty">Bu gün için plan yok.</p>`}
+   ${parts.length ? parts.map(p => { const k = partKey(p), K = KIND[p.kind] || KIND.tekrar, on = !!x.done[k]; return `<div class="check ${on ? "done" : ""}"><input type="checkbox" id="pt-${esc(k)}" data-part="${esc(k)}" ${on ? "checked" : ""} aria-label="${esc(p.lab)}"><label class="t" for="pt-${esc(k)}"><span class="kind ${K[1]}">${K[0]}</span>${yolChip(p.yol)} <b>${esc(p.lab)}</b><br><span class="small muted num">${Math.round(partPages(p))} sayfa · ~${est(partPages(p))}</span></label>${p.yol === "kayit" ? `<button class="small" data-recnewr="${p.f}-${p.t}">● Kaydet</button>` : ""}<button class="ghost small" data-open="${p.f}">Aç</button></div>`; }).join("") : `<p class="empty">Bu gün için plan yok.</p>`}
   </div>
   <div class="card"><h3>Süre</h3>
    <div class="grid3"><label>Saat<input type="number" min="0" inputmode="numeric" id="dm-h" value="${Math.floor((x.min || 0) / 60)}"></label><label>Dakika<input type="number" min="0" max="59" inputmode="numeric" id="dm-m" value="${(x.min || 0) % 60}"></label><label>Toplam<output class="num big2">${fmtMin(x.min)}</output></label></div>
@@ -1084,7 +1107,7 @@ function vBugun(){
   return `<div class="card hero"><span class="k">${sepetOn() ? "Ezber sepeti · programsız" : esc(S.plan.name || stageName(S.plan.stages[0]))}</span><span class="big">${sepetOn() ? sepetCounts().ok + " sağlam · " + (604 - sepetCounts().ok) + " kalan" : esc(pf.info || "")}</span>
    <div class="row between small"><span>${trD(TODAY)}</span><span class="num">${streak()} gün kesintisiz</span></div>
    <div class="row small num" style="gap:16px"><span>Bu hafta: ${fmtMin(wmin)}</span><span>${wpg} sayfa</span></div></div>
-   ${vOdevCard()}${sepetOn() ? vSepetToday() : vSmartPlan()}${dayView(TODAY)}`;
+   ${vStages()}${vOdevCard()}${sepetOn() ? vSepetToday() : vSmartPlan()}${dayView(TODAY)}`;
 }
 function vTakvim(){
   const [y, m] = ui.cal.split("-").map(Number), first = new Date(y, m - 1, 1), lead = (first.getDay() + 6) % 7, nd = new Date(y, m, 0).getDate();
@@ -2401,9 +2424,9 @@ function vSepetToday(){
   const sg = sepetSuggest(), rd = readToday(), C = sepetCounts();
   const grp = (k, t, d, L) => L.length ? `<div class="sgrp"><div class="row between"><span><b>${t}</b> <span class="tiny">${d}</span></span><span class="num small">${L.length} s.</span></div>
      <p class="small">${rangesOf(L).map(([a, b]) => `<button class="chip c-${k === "tekrar" ? "ok" : "warn"}" data-open="${a}">s. ${a === b ? a : a + "–" + b}</button>`).join(" ")}</p>
-     <button class="primary small" data-sread="${L.join(",")}">Okudum</button></div>` : "";
+     <div class="row"><button class="primary small" data-sread="${L.join(",")}">Okudum</button><button class="small" data-sdl="${L.join(",")}">Dinlettim</button></div></div>` : "";
   return `<div class="card sepet-today"><div class="row between"><h3>Bugün ne okuyayım?</h3><label class="inline tiny">Günlük<input type="number" id="sp-goal" value="${sg.goal}" min="1" max="200" style="width:4.5em" inputmode="numeric"> s.</label></div>
-   ${C.ok + C.warn + C.bad === 0 ? `<p class="small">Önce <button class="ghost small" data-tab="sepet">Ezber sepeti</button>'nde hangi sayfaların sağlam, hangilerinin zayıf olduğunu işaretle; öneriler ona göre gelir.</p>` : ""}
+   ${vSepetSummary(true)}${C.ok + C.warn + C.bad === 0 ? `<p class="small">Önce <button class="ghost small" data-tab="sepet">Ezber sepeti</button>'nde hangi sayfaların sağlam, hangilerinin zayıf olduğunu işaretle; öneriler ona göre gelir.</p>` : ""}
    ${grp("tekrar", "Tekrar", "sağlam ama en uzun süredir okunmayan", sg.tekrar)}${grp("guc", "Güçlendir", "orta ve zayıf sayfalar", sg.guc)}
    <details class="sgrp"><summary class="small"><b>Başka bir yer okudum</b></summary><div class="grid3"><label>Sayfadan<input type="number" id="sr-f" min="1" max="604" inputmode="numeric"></label><label>Sayfaya<input type="number" id="sr-t" min="1" max="604" inputmode="numeric"></label><label>&nbsp;<button class="small" data-act="sreadrange">Ekle</button></label></div></details>
    ${rd.length ? `<div class="sgrp done"><b class="small">Bugün okuduğun: ${rd.length} sayfa</b><p class="small">${rangeTxt(rangesOf(rd))}</p>
@@ -2420,13 +2443,14 @@ function vSepet(){
   return `<section><h2>Ezber sepeti</h2>
    <div class="card"><div class="sbig"><div><b class="num">${C.ok}</b><span>sağlam sayfa</span></div><div><b class="num">${tot - C.ok}</b><span>kalan</span></div><div><b class="num">%${pct(C.ok)}</b><span>tamam</span></div></div>
     <div class="sbar"><i class="s-ok" style="width:${pct(C.ok)}%"></i><i class="s-warn" style="width:${pct(C.warn)}%"></i><i class="s-bad" style="width:${pct(C.bad)}%"></i></div>
-    <p class="tiny">Sağlam ${C.ok} · Orta ${C.warn} · Zayıf ${C.bad} · İşaretsiz ${C[""]}</p></div>
+    <p class="tiny">Sağlam ${C.ok} · Orta ${C.warn} · Zayıf ${C.bad} · İşaretsiz ${C[""]}</p>${vSepetSummary(false)}</div>
    <div class="card"><div class="row between"><h3>İşaretle</h3><label class="inline small"><input type="checkbox" id="sp-range" ${ui.rangeMode ? "checked" : ""}> Aralık seç</label></div>
     <div class="seg">${[["ok", "Sağlam"], ["warn", "Orta"], ["bad", "Zayıf"], ["", "Temizle"]].map(([v, l]) => `<button class="${brush === v ? "on" : ""} br-${v || "none"}" data-brush="${v}">${l}</button>`).join("")}</div>
     <p class="tiny">${ui.rangeMode ? (sel ? `Başlangıç s. ${sel}. Şimdi bitiş sayfasına dokun.` : "Başlangıç sayfasına, sonra bitiş sayfasına dokun; aradaki hepsi işaretlenir.") : "Bir kutuya dokununca o sayfa, soldaki cüz numarasına dokununca bütün cüz seçili renkle işaretlenir."} Uzun basmana gerek yok. Bugün okuduğun sayfalar noktalı görünür.</p>
     <div class="sgrid">${rows}</div>
     <div class="row"><button class="ghost small" data-act="sallok">Hepsini sağlam say</button><button class="ghost small" data-act="sclear">Hepsini temizle</button></div></div>
    <div class="card"><h3>Kalan ${kalan.length} sayfa</h3>${kalan.length ? Object.entries(byJ).map(([j, L]) => `<div class="kalan"><b class="small">${j}. cüz</b> <span class="small">${rangesOf(L).map(([a, b]) => `<button class="chip c-${pst(a) || "none"}" data-open="${a}">${a === b ? a : a + "–" + b}</button>`).join(" ")}</span></div>`).join("") : `<p class="empty">Bütün sayfalar sağlam sepette. Maşallah!</p>`}</div>
+   ${vPageNotes()}
    <div class="card"><h3>Kullanım şekli</h3>${seg("mode", [["plan", "Programlı"], ["sepet", "Programsız (sepet)"]], S.mode === "sepet" ? "sepet" : "plan")}
     <p class="tiny">Programsızda Bugün ekranı plan yerine "Bugün ne okuyayım?" önerisini gösterir; okuduklarını "Okudum" ile işaretlersin. Sepet ve sayfa durumları iki şekilde de aynıdır; istediğin zaman geçebilirsin.</p></div>
    ${vSepetToday()}</section>`;
@@ -2436,6 +2460,97 @@ function sepetTap(p){
   if (ui.rangeMode) { if (ui.rangeA == null) { ui.rangeA = p; return; } const a = Math.min(ui.rangeA, p), b = Math.max(ui.rangeA, p); for (let q = a; q <= b; q++) setPst(q, brush); ui.rangeA = null; toast("s. " + a + "–" + b + ": " + PST[brush]); }
   else { setPst(p, pst(p) === brush && brush ? "" : brush); }
   mark("pages");
+}
+
+/* ===== Tekrar şekli (oku / dinlet / kaydet) ===== */
+const YOL = { oku: ["Okuyarak", "y-oku"], dinlet: ["Dinleterek", "y-dinlet"], kayit: ["Kaydedip dinleyerek", "y-kayit"] };
+function yolChip(y){ const Y = YOL[y || "oku"]; return y && y !== "oku" ? `<span class="kind ${Y[1]}">${Y[0]}</span>` : ""; }
+function markDinlet(pages, d){ pages.forEach(p => { const pg = S.pages[p] || (S.pages[p] = {}); pg.dl = d || TODAY; }); mark("pages"); }
+
+/* ===== Bugün: aşama kartları (sağa kaydırılır) ===== */
+function stageDates(){
+  const cur = S.plan, pr = curPlan(), lens = pr.lens, ci = diffD(cur.start, TODAY) + (+cur.offset || 0);
+  let acc = 0; const out = [];
+  cur.stages.forEach((st, k) => { const len = lens[k], s0 = acc; out.push({ k, st, len, from: addDays(TODAY, s0 - ci), to: len != null ? addDays(TODAY, s0 + len - 1 - ci) : null, cur: ci >= s0 && (len == null || ci < s0 + len), done: len != null && ci >= s0 + len, dayIn: ci - s0 + 1 }); acc += len == null ? 0 : len; });
+  const total = lens.every(x => x != null) ? lens.reduce((a, b) => a + b, 0) : null;
+  return { out, ci, total, left: total != null ? Math.max(0, total - ci) : null };
+}
+const ayGun = n => n < 45 ? n + " gün" : n + " gün (≈ " + (n / 30).toFixed(n < 300 ? 1 : 0).replace(".", ",") + " ay)";
+function vStages(){
+  if (sepetOn() || !S.plan || !S.plan.stages) return "";
+  const D = stageDates(), N = D.out.length;
+  const card = o => { const st = o.st, def = PLAN_DEFS[st.type] || {}, nat = buildPlan(st.type, st.p);
+    const pace = st.type === "sayfa" ? (st.p.n || 10) + " sayfa/gün" : "";
+    const left = o.len != null ? Math.max(0, o.len - Math.max(0, o.dayIn - 1)) : null;
+    return `<div class="stc ${o.cur ? "cur" : o.done ? "done" : ""}" data-sti="${o.k}"><div class="row between nowrap"><span class="stn">${o.k + 1}/${N}. aşama</span><span class="chip ${o.cur ? "c-ok" : o.done ? "c-none" : "c-gold"}">${o.cur ? "Şu an" : o.done ? "Bitti" : "Sırada"}</span></div>
+      <b>${esc(stageName(st))}</b><span class="small">${[pace, YOL[st.yol || "oku"][0]].filter(Boolean).join(" · ")}</span>
+      <span class="small muted">${o.len != null ? ayGun(o.len) + " · " + trD(o.from) + " – " + trD(o.to) : "Süresiz; sen değiştirene kadar devam eder"}</span>
+      ${o.cur && o.len != null ? `<div class="bar"><i style="width:${Math.min(100, (o.dayIn - 1) / o.len * 100)}%"></i></div><span class="small"><b>${o.dayIn}. gün</b> · bu aşamanın bitmesine <b>${left} gün</b></span>` : ""}
+      ${o.cur && o.len == null ? `<span class="small"><b>${o.dayIn}. gün</b></span>` : ""}</div>`; };
+  return `<div class="card stcard"><div class="row between nowrap"><h3>Programın</h3><span class="row nowrap"><button class="ghost small" data-stnav="-1" aria-label="Önceki aşama">‹</button><button class="ghost small" data-stnav="1" aria-label="Sonraki aşama">›</button></span></div>
+   <div class="stcar" id="stcar">${D.out.map(card).join("")}</div>
+   <p class="small">${D.total != null ? `Toplam <b>${ayGun(D.total)}</b>. Düzenli gidersen kalan <b>${ayGun(D.left)}</b>, bitiş <b>${trDY(addDays(TODAY, D.left))}</b>.` : `Son aşama süresiz devam eder.`} <span class="muted">Gün atlarsan Plan'daki "Kaydır" ile ertele; bitiş o kadar uzar.</span></p></div>`;
+}
+function stCarInit(){ const c = document.getElementById("stcar"); if (!c || c.dataset.init) return; c.dataset.init = 1; const cur = c.querySelector(".stc.cur"); if (cur) c.scrollLeft = cur.offsetLeft - c.offsetLeft; }
+
+/* ===== Sepet özeti ve sayfa notları ===== */
+function jRanges(L){ return rangesOf(L).map(([a, b]) => a === b ? a : a + "–" + b).join(", "); }
+function sepetSummary(){
+  const full = [], part = [], weak = [], none = [];
+  for (let j = 1; j <= 30; j++) { const [a, b] = juzPages(j), n = b - a + 1; let ok = 0, mk = 0; const rest = [];
+    for (let p = a; p <= b; p++) { const s = pst(p); if (s === "ok") ok++; else rest.push(p); if (s) mk++; }
+    if (ok === n) full.push(j); else if (ok) part.push([j, ok, n, rest]); else if (mk) weak.push(j); else none.push(j); }
+  return { full, part, weak, none };
+}
+function vSepetSummary(compact){
+  const s = sepetSummary(); if (!s.full.length && !s.part.length && !s.weak.length) return "";
+  return `<div class="ssum">${s.full.length ? `<p class="small"><span class="dot s-ok"></span><b>Sağlam cüzler:</b> ${jRanges(s.full)}</p>` : ""}
+   ${s.part.length ? `<p class="small"><span class="dot s-warn"></span><b>Kısmen sağlam:</b> ${s.part.slice(0, compact ? 4 : 30).map(([j, ok, n, rest]) => `${j}. cüz (${ok}/${n}, kalan s. ${jRanges(rest)})`).join(" · ")}${compact && s.part.length > 4 ? " …" : ""}</p>` : ""}
+   ${s.weak.length ? `<p class="small"><span class="dot s-bad"></span><b>Zayıf işaretli cüzler:</b> ${jRanges(s.weak)}</p>` : ""}
+   ${s.none.length && !compact ? `<p class="small"><span class="dot s-none"></span><b>Henüz işaretlenmedi:</b> ${jRanges(s.none)}</p>` : ""}</div>`;
+}
+function vPageNotes(){
+  const L = Object.entries(S.pages).filter(([p, v]) => v.n).sort((a, b) => a[0] - b[0]);
+  return `<div class="card"><h3>Sayfa notları (${L.length})</h3>${L.map(([p, v]) => `<button class="gorow" data-open="${p}"><span class="chip c-${v.st || "none"}">s. ${p}</span><span class="t small">${esc(v.n)}</span></button>`).join("") || `<p class="small muted">Henüz not yok.</p>`}
+   <div class="grid2 pnote"><label>Sayfa<input type="number" id="pn-p" min="1" max="604" inputmode="numeric" placeholder="Örn. 45"></label><label>Not<input id="pn-t" placeholder="Örn. 3. satırda takılıyorum"></label></div><button class="small" data-act="pnadd">Notu ekle</button></div>`;
+}
+
+/* ===== Analiz (alt menü) ===== */
+function errDetail(e){ return `${e.i >= 0 ? esc(refStr(e.i)) + " · " : ""}${esc((ERRN[e.k] || e.k))}${e.r ? ` · <span class="ar2" lang="ar">${esc(e.r)}</span>` : ""}${e.cr ? " → " + esc(e.cr) : ""}${e.c > 1 ? " ×" + e.c : ""} · ${trD(e.d)}`; }
+function vGenel(){
+  const C = sepetCounts(), pct = v => (v / 604 * 100).toFixed(1);
+  const jbars = Array.from({ length: 30 }, (_, k) => { const [a, b] = juzPages(k + 1), n = b - a + 1, c = { ok: 0, warn: 0, bad: 0 }; for (let p = a; p <= b; p++) { const s = pst(p); if (c[s] != null) c[s]++; } return `<div class="jb"><span class="tiny num">${k + 1}</span><div class="sbar sm">${["ok", "warn", "bad"].map(s => `<i class="s-${s}" style="width:${c[s] / n * 100}%"></i>`).join("")}</div></div>`; }).join("");
+  // dinletme
+  const logs = []; for (let j = 1; j <= 30; j++) ((S.juz[j] || {}).logs || []).forEach(l => logs.push(Object.assign({ j }, l)));
+  const d30 = addDays(TODAY, -29), logs30 = logs.filter(l => l.d >= d30);
+  const jDl = Array.from({ length: 30 }, (_, k) => { const l = lastLog(k + 1); return `<button class="jdl c-${colorOf(l)}" data-tab="takip" title="${k + 1}. cüz">${k + 1}<small>${l ? trD(l.d) : "—"}</small></button>`; }).join("");
+  const never = Array.from({ length: 30 }, (_, k) => k + 1).filter(j => !lastLog(j));
+  let pgDl = 0, pgDl30 = 0; for (let p = 1; p <= 604; p++) { const dl = S.pages[p] && S.pages[p].dl; if (dl) { pgDl++; if (dl >= d30) pgDl30++; } }
+  // okuma
+  let r30 = 0, m30 = 0; const yolN = { oku: 0, dinlet: 0, kayit: 0 };
+  for (let k = 0; k < 30; k++) { const d = addDays(TODAY, -k), x = S.days[d]; r30 += readPages(d); m30 += (x && x.min) || 0; if (!x) continue;
+    partsFor(d).parts.forEach(pt => { if (x.done[partKey(pt)]) yolN[pt.yol || "oku"] += partPages(pt); }); yolN.oku += (x.read || []).length; }
+  const recs = (RECS || []); const recMine = recs.filter(r => !r.who || r.who === "Ben").length;
+  // hatalar
+  const byK = {}, byP = {}; S.err.forEach(e => { byK[e.k] = (byK[e.k] || 0) + e.c; (byP[e.p] = byP[e.p] || []).push(e); });
+  const topP = Object.entries(byP).map(([p, L]) => [+p, L, L.reduce((s, e) => s + e.c, 0)]).sort((a, b) => b[2] - a[2]).slice(0, 15);
+  const totE = S.err.reduce((s, e) => s + e.c, 0), risk = riskList(8).filter(x => x[1].r >= .5);
+  return `<section><h2>Analiz</h2>
+   <div class="card"><div class="row between"><h3>Sağlamlık</h3><button class="ghost small" data-tab="sepet">Sepeti aç</button></div>
+    <div class="sbig"><div><b class="num">${C.ok}</b><span>sağlam</span></div><div><b class="num">${C.warn + C.bad}</b><span>orta/zayıf</span></div><div><b class="num">%${pct(C.ok)}</b><span>tamam</span></div></div>
+    <div class="sbar"><i class="s-ok" style="width:${pct(C.ok)}%"></i><i class="s-warn" style="width:${pct(C.warn)}%"></i><i class="s-bad" style="width:${pct(C.bad)}%"></i></div>
+    ${vSepetSummary(true)}<details><summary class="small">Cüz cüz sağlamlık</summary><div class="jbars">${jbars}</div></details></div>
+   <div class="card"><h3>Dinletme</h3>
+    <div class="stats"><div class="stat"><b class="num">${30 - never.length}/30</b><span>dinletilmiş cüz</span></div><div class="stat"><b class="num">${logs30.length}</b><span>son 30 gün dinletme</span></div><div class="stat"><b class="num">${pgDl}</b><span>dinletilen sayfa</span></div><div class="stat"><b class="num">${recMine}</b><span>kendi kaydın</span></div></div>
+    <div class="jdls">${jDl}</div>
+    <p class="small">${never.length ? `<b>Hiç dinletilmeyen cüzler:</b> ${jRanges(never)}` : "Bütün cüzler en az bir kez dinletildi."}</p>
+    <p class="tiny">Renk son dinletmeden: yeşil 0–2 hata, sarı 3–6 hata, kırmızı fazlası. Dinletme kaydı Takip > Cüzler'den ya da plandaki "Dinleterek" parçalardan gelir.</p></div>
+   <div class="card"><h3>Son 30 gün</h3><div class="stats"><div class="stat"><b class="num">${r30}</b><span>sayfa okundu</span></div><div class="stat"><b class="num">${fmtMin(m30)}</b><span>süre</span></div><div class="stat"><b class="num">${streak()}</b><span>gün seri</span></div></div>
+    <div class="ystack">${Object.entries(yolN).map(([y, n]) => `<span class="kind ${YOL[y][1]}">${YOL[y][0]}: ${n} s.</span>`).join(" ")}</div></div>
+   <div class="card"><h3>Hatalar (${totE})</h3><div class="chips">${ERRK.map(([k, l]) => byK[k] ? `<span class="chip c-bad">${esc(l.split(" ")[0])} ${byK[k]}</span>` : "").join("")}</div>
+    ${topP.length ? topP.map(([p, L, n]) => `<details class="perr"><summary><span class="chip c-bad num">${n}</span> <b>s. ${p}</b> <span class="small muted">${esc(SN(ref(pStart(p))[0]))} · ${juzOfPage(p)}. cüz</span></summary>${L.slice(0, 12).map(e => `<div class="small">${errDetail(e)}</div>`).join("")}<button class="ghost small" data-open="${p}">Sayfayı aç</button></details>`).join("") : `<p class="small muted">Hata kaydı yok.</p>`}</div>
+   ${risk.length ? `<div class="card"><h3>Unutulmaya yüz tutanlar</h3><p class="small">${risk.map(([p, k]) => `<button class="chip c-${k.r >= .8 ? "bad" : "warn"}" data-open="${p}">s. ${p}${k.days != null ? " · " + k.days + " gün" : ""}</button>`).join(" ")}</p></div>` : ""}
+   <div class="row"><button class="ghost small" data-tab="takip">Ayrıntılı takip</button><button class="ghost small" data-tab="ist">İstatistik ve rozetler</button><button class="ghost small" data-tab="rapor">Hoca raporu</button></div></section>`;
 }
 
 /* ===== Kişisel ezber analizi ===== */
@@ -2891,6 +3006,7 @@ function vPlan(){
      ${chainHtml(cur.stages, curStage)}<span class="small">${esc(today.info || "")}</span>
      <div class="row"><span class="small">Kaydır:</span><button class="onacc" data-act="off-1" aria-label="Bir gün geri">−1 gün</button><span class="num">${cur.offset || 0}</span><button class="onacc" data-act="off+1" aria-label="Bir gün ileri">+1 gün</button><span class="small">Kaçırdığın günü ertesine yığma, planı 1 gün geri al.</span></div></div>
    <div class="card"><h3>Onarım eklentisi</h3><p class="small muted">Her güne zayıf işaretli sayfaları ya da en zayıf cüzü ekler.</p>${seg("onarim", [["sayfa", "Zayıf sayfalar"], ["risk", "Unutma riski"], ["cuz", "En zayıf cüz"], ["yok", "Ekleme"]], S.settings.onarim)}</div>
+   ${sepetOn() ? `<div class="card warnc"><b>Şu an programsız kullanıyorsun.</b><p class="small">Bugün ve Takvim'de program görünmüyor; Ezber sepeti önerileriyle serbest tekrar yapıyorsun. Aşağıdan bir program seçip başlatınca programlıya geçersin.</p></div>` : `<div class="card"><p class="small">Program istemiyor musun? <button class="ghost small" data-seg="mode" data-v="sepet">Programsız kullan</button> Bugün ve Takvim'de sadece serbest tekrar ve sepet önerileri görünür.</p></div>`}
    ${seg("plSeg", [["hazir", "Hazır programlar"], ["kur", "Kendin kur"], ["yontem", "Yöntemler"]], ui.plSeg || "hazir")}`;
   const sg = ui.plSeg || "hazir";
   if (sg === "yontem") return head + `${Object.values(PLAN_DEFS).map(d => `<div class="card"><div class="row between"><b>${esc(d.ad)}</b><span class="small gold">${esc(d.etiket)}</span></div><p class="small">${esc(d.kisa)}</p><p class="small muted">Kimin için: ${esc(d.uygun)}</p></div>`).join("")}
@@ -2909,9 +3025,9 @@ function vPlan(){
   const stCard = (st, k) => { const def = PLAN_DEFS[st.type], last = k === dr.stages.length - 1, nat = buildPlan(st.type, st.p), natLen = nat.steps || nat.cycle;
     const dopts = [["", last ? "Süresiz (devam eder)" : (natLen ? "1 tur · " + natLen + " gün" : "30 gün")], ...[7, 14, 15, 20, 30, 45, 60, 90, 120, 180, 365].map(v => [v, v + " gün"])];
     return `<div class="stage"><div class="row between nowrap"><span class="stn">${k + 1}. aşama</span><div class="row nowrap">${k ? `<button class="ghost small" data-stup="${k}" aria-label="Yukarı">↑</button>` : ""}${!last ? `<button class="ghost small" data-stdown="${k}" aria-label="Aşağı">↓</button>` : ""}${dr.stages.length > 1 ? `<button class="ghost small danger" data-strm="${k}" aria-label="Aşamayı sil">Sil</button>` : ""}</div></div>
-     <div class="grid2"><label>Yöntem<select data-sttype="${k}" id="st-t-${k}">${Object.entries(PLAN_DEFS).map(([v, d]) => opt(v, d.ad, st.type)).join("")}</select></label><label>Süre<select data-stdays="${k}" id="st-d-${k}">${dopts.map(o => opt(o[0], o[1], st.days || "")).join("")}</select></label>
+     <div class="grid2"><label>Yöntem<select data-sttype="${k}" id="st-t-${k}">${Object.entries(PLAN_DEFS).map(([v, d]) => opt(v, d.ad, st.type)).join("")}</select></label><label>Süre<select data-stdays="${k}" id="st-d-${k}">${dopts.map(o => opt(o[0], o[1], st.days || "")).join("")}</select></label><label>Nasıl tekrar<select data-styol="${k}" id="st-y-${k}">${Object.entries(YOL).map(([v, y]) => opt(v, y[0], st.yol || "oku")).join("")}</select></label>
      ${def.params.map(([pk, l, o]) => o === "num" ? `<label>${esc(l)}<input type="number" min="1" max="604" data-stp="${k}" data-pk="${pk}" id="st-${k}-${pk}" value="${esc(st.p[pk] ?? def.def[pk])}" inputmode="numeric"></label>` : `<label>${esc(l)}<select data-stp="${k}" data-pk="${pk}" id="st-${k}-${pk}">${o.map(x => opt(x[0], x[1], st.p[pk] ?? def.def[pk])).join("")}</select></label>`).join("")}</div>
-     <p class="small muted">${esc(def.kisa)}</p></div>`; };
+     ${st.type === "sayfa" ? `<p class="small gold"><b>Günde ${st.p.n || def.def.n} sayfa → ${ayGun(natLen)}</b> (seçtiğin cüz aralığı tek tur)</p>` : ""}<p class="small muted">${esc(def.kisa)}</p></div>`; };
   return head + `<form class="card" id="planform"><div class="grid2"><label>Program adı<input id="pl-name" value="${esc(dr.name)}" placeholder="Örn. Kış dönemi sağlamlaştırma"></label><label>Başlangıç<input type="date" id="pp-start" value="${dr.start}"></label></div>
      ${statLine(dr.stages, dr.start)}${chainHtml(dr.stages)}
      <h3>Günlük yük eğrisi</h3>${loadCurve(dr.stages, dr.start)}
@@ -2970,13 +3086,15 @@ function vAyar(){
 }
 
 /* ---------- çizim ---------- */
-const NAV = [["bugun", "Bugün", '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'], ["takvim", "Takvim", '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'], ["mushaf", "Mushaf", '<path d="M4 5c3-1 5-1 8 1v14c-3-2-5-2-8-1zM20 5c-3-1-5-1-8 1v14c3-2 5-2 8-1z"/>'], ["mut", "Müteşabih", '<path d="M4 7h7M4 12h7M4 17h7M14 7h6M14 12h6M14 17h6"/>'], ["menu", "Menü", '<circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>']];
-const VIEWS = { sepet: vSepet, hatir: () => `<section><h2>Hatırlatmalar</h2>${vRemind()}<div class="card"><h3>Telefon</h3><label class="inline"><input type="checkbox" id="set-wake" ${S.settings.wake !== false ? "checked" : ""}> Mushaf açıkken ekran kapanmasın</label></div></section>`, gen: vGen, konu: vKonu, rapor: vRapor, bugun: vBugun, takvim: vTakvim, mushaf: vMushaf, mut: vMut, menu: vMenu, sina: vSina, takip: vTakip, ist: vIst, plan: vPlan, rehber: vRehber, ayar: vAyar, dinle: vDinle, hoca: vHoca, mukabele: vMukabele };
-function render(){
+const NAV = [["bugun", "Bugün", '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'], ["takvim", "Takvim", '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'], ["mushaf", "Mushaf", '<path d="M4 5c3-1 5-1 8 1v14c-3-2-5-2-8-1zM20 5c-3-1-5-1-8 1v14c3-2 5-2 8-1z"/>'], ["analiz", "Analiz", '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'], ["mut", "Müteşabih", '<path d="M4 7h7M4 12h7M4 17h7M14 7h6M14 12h6M14 17h6"/>'], ["menu", "Menü", '<circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>']];
+const VIEWS = { analiz: vGenel, sepet: vSepet, hatir: () => `<section><h2>Hatırlatmalar</h2>${vRemind()}<div class="card"><h3>Telefon</h3><label class="inline"><input type="checkbox" id="set-wake" ${S.settings.wake !== false ? "checked" : ""}> Mushaf açıkken ekran kapanmasın</label></div></section>`, gen: vGen, konu: vKonu, rapor: vRapor, bugun: vBugun, takvim: vTakvim, mushaf: vMushaf, mut: vMut, menu: vMenu, sina: vSina, takip: vTakip, ist: vIst, plan: vPlan, rehber: vRehber, ayar: vAyar, dinle: vDinle, hoca: vHoca, mukabele: vMukabele };
+let _rBusy = false, _rAgain = false;
+function render(){ if (_rBusy) { _rAgain = true; return; } _rBusy = true; try { _render(); } finally { _rBusy = false; } if (_rAgain) { _rAgain = false; setTimeout(render, 0); } }
+function _render(){
   const navOn = NAV.some(n => n[0] === ui.tab) ? ui.tab : "menu";
   $("#nav").innerHTML = NAV.map(n => `<button class="${navOn === n[0] ? "on" : ""}" data-tab="${n[0]}" aria-label="${n[1]}"><svg viewBox="0 0 24 24" aria-hidden="true">${n[2]}</svg>${n[1]}</button>`).join("");
   $("#back").hidden = navOn !== "menu" || ui.tab === "menu";
-  $("#main").innerHTML = (VIEWS[ui.tab] || vBugun)(); fitLines(); requestAnimationFrame(fitLines); wakeSync();
+  $("#main").innerHTML = (VIEWS[ui.tab] || vBugun)(); fitLines(); requestAnimationFrame(fitLines); wakeSync(); stCarInit();
   const ab = $("#abar"); const au = AUDIO ? AUDIO.url + (AUDIO.cmp ? "|" + AUDIO.cmp.url : "") : ""; if (ab.dataset.url !== au) { ab.innerHTML = audioBar(); ab.dataset.url = au; ab.hidden = !AUDIO; const pl = $("#aplayer"); if (pl && AUDIO && AUDIO.id) pl.addEventListener("loadedmetadata", () => { if (isFinite(pl.duration) && pl.duration > 0) { const id = AUDIO.id, d = Math.round(pl.duration); recUpdate(id, r => { if (!r.dur) r.dur = d; }); } }, { once: true }); } document.body.classList.toggle("hasaudio", !!AUDIO);
 }
 function go(t){ ui.tab = t; ui.conf = null; try { localStorage.setItem("hifz-ui", JSON.stringify({ tab: t, page: ui.page })); } catch (e) {} render(); window.scrollTo(0, 0); }
@@ -3020,6 +3138,9 @@ document.addEventListener("click", e => {
   if (a.sp) { sepetTap(+a.sp); return render(); }
   if (a.sj) { const [x, y] = juzPages(+a.sj), br = ui.brush ?? "ok"; for (let p = x; p <= y; p++) setPst(p, br); mark("pages"); toast(a.sj + ". cüz: " + PST[br]); return render(); }
   if (a.brush != null) { ui.brush = a.brush; ui.rangeA = null; return render(); }
+  if (a.sdl) { const L = a.sdl.split(",").map(Number); addRead(L); markDinlet(L); ui.lastRead = L; toast(L.length + " sayfa dinletildi olarak işlendi"); return render(); }
+  if (a.recnewr) { const [f2, t2] = a.recnewr.split("-").map(Number); ui.newRec = true; ui.rc = { p: f2, p2: t2, n: "", who: "", ref: false }; return go("dinle"); }
+  if (a.stnav) { const c = $("#stcar"); if (c) c.scrollBy({ left: +a.stnav * c.clientWidth * 0.86, behavior: "smooth" }); return; }
   if (a.sread) { const L = a.sread.split(",").map(Number); addRead(L); ui.lastRead = L; toast(L.length + " sayfa okundu"); return render(); }
   if (a.sreadst) { const L = ui.lastRead || readToday(); L.forEach(p => setPst(p, a.sreadst)); mark("pages"); toast(L.length + " sayfa: " + PST[a.sreadst]); return render(); }
   if (a.recgo) { ui.recOpen = a.recgo; ui.recF = ""; ui.recWho = ""; return go("dinle"); }
@@ -3075,6 +3196,7 @@ document.addEventListener("click", e => {
     draftdel(){ DRAFT = null; draftClear(); },
     icsexp(){ icsExport(); return true; },
     recsharesel(){ recShare(Object.keys(ui.recSel || {}).filter(k => ui.recSel[k])); return true; },
+    pnadd(){ const p = Math.max(1, Math.min(604, +($("#pn-p") || {}).value || 0)), n = (($("#pn-t") || {}).value || "").trim(); if (!p || !n) { toast("Sayfa ve not yaz"); return true; } const pg = S.pages[p] || (S.pages[p] = {}); pg.n = n; mark("pages"); toast("s. " + p + " notu kaydedildi"); },
     sreadrange(){ const f = Math.max(1, Math.min(604, +($("#sr-f") || {}).value || 0)), t = Math.max(1, Math.min(604, +($("#sr-t") || {}).value || f)); if (!f) return true; const L = []; for (let p = Math.min(f, t); p <= Math.max(f, t); p++) L.push(p); addRead(L); ui.lastRead = L; toast(L.length + " sayfa bugün okundu olarak işlendi"); },
     sreadundo(){ if (ui.lastRead) { delRead(ui.lastRead); ui.lastRead = null; } else toast("Geri alınacak bir şey yok"); },
     sallok(){ let n = 0; for (let p = 1; p <= 604; p++) if (!pst(p)) { setPst(p, "ok"); n++; } mark("pages"); toast(n + " işaretsiz sayfa sağlam sayıldı"); },
@@ -3104,7 +3226,7 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("change", e => {
   const t = e.target, a = t.dataset, id = t.id;
-  if (a.part) { const d = ui.tab === "bugun" ? TODAY : ui.day, x = dayRec(d); x.done[a.part] = t.checked; if (d <= TODAY) { const pf = partsFor(d); const wasDyn = x.snap && x.snap.dyn; x.snap = { parts: pf.parts, info: pf.info, pk: planPK(), dyn: wasDyn };
+  if (a.part) { const d = ui.tab === "bugun" ? TODAY : ui.day, x = dayRec(d); x.done[a.part] = t.checked; { const pt0 = partsFor(d).parts.find(q => partKey(q) === a.part); if (pt0 && pt0.yol === "dinlet" && t.checked) markDinlet(partPageList(pt0), d); } if (d <= TODAY) { const pf = partsFor(d); const wasDyn = x.snap && x.snap.dyn; x.snap = { parts: pf.parts, info: pf.info, pk: planPK(), dyn: wasDyn };
       if (wasDyn && t.checked) { const pt = pf.parts.find(q => partKey(q) === a.part); if (pt) { partPageList(pt).forEach(q => { const e = S.srs[q] || [1, d], bad = S.pages[q] && S.pages[q].st === "bad"; const nb = bad ? 1 : Math.min(5, e[0] + 1); S.srs[q] = [nb, addDays(d, SRS_INT[nb])]; }); mark("srs"); } } } markDay(d); render(); if (t.checked && dayStatus(d) === "full") toast("Günün planı tamam"); return; }
   const day = ui.tab === "bugun" ? TODAY : ui.day;
   if (id === "dm-h" || id === "dm-m") { const x = dayRec(day); x.min = Math.max(0, (+$("#dm-h").value || 0) * 60 + (+$("#dm-m").value || 0)); markDay(day); return render(); }
@@ -3154,6 +3276,7 @@ document.addEventListener("change", e => {
   if (id === "qz-m") { ui.qz.mode = t.value; ui.quiz = null; return render(); } if (id === "qz-f") { ui.qz.from = +t.value; if (ui.qz.to < ui.qz.from) ui.qz.to = ui.qz.from; ui.quiz = null; return render(); } if (id === "qz-t") { ui.qz.to = +t.value; if (ui.qz.from > ui.qz.to) ui.qz.from = ui.qz.to; ui.quiz = null; return render(); }
   if (id === "ef-p") { const f = $("#errform"); const p = Math.max(1, Math.min(604, +t.value || 1)); f.outerHTML = errForm({ p, d: $("#ef-d").value }); return; }
   if (a.sttype != null) { const st = ui.plDraft.stages[+a.sttype]; st.type = t.value; st.p = Object.assign({}, PLAN_DEFS[t.value].def); return render(); }
+  if (a.styol != null) { ui.plDraft.stages[+a.styol].yol = t.value; return render(); }
   if (a.stdays != null) { ui.plDraft.stages[+a.stdays].days = t.value ? +t.value : null; return render(); }
   if (a.stp != null) { ui.plDraft.stages[+a.stp].p[a.pk] = t.type === "number" ? +t.value : (/^\d+$/.test(t.value) ? +t.value : t.value); return render(); }
   if (id === "pp-start") { ui.plDraft.start = t.value || TODAY; return render(); }
@@ -3188,7 +3311,7 @@ document.addEventListener("submit", e => {
   if (f === "ef") { Object.assign(ui.eF, { k: v("ef-fk"), juz: v("ef-fj"), from: v("ef-ff"), to: v("ef-ft"), q: v("ef-fq"), star: $("#ef-fs").checked }); return render(); }
   if (f === "wkform") { const wk = ui.week || weekKey(TODAY); S.weeks[wk] = { a: WEEKQ.map((q, i) => v("wq-" + i)), note: v("wq-n") }; mark("core"); return toast("Değerlendirme kaydedildi"); }
   if (f === "qpform") { const q = ui.quiz; q.g = +v("qp-g"); q.done = true; quizLog(Math.abs(q.g - q.p) === 0); return render(); }
-  if (f === "planform") { const dr = ui.plDraft; dr.name = v("pl-name");
+  if (f === "planform") { S.mode = "plan"; const dr = ui.plDraft; dr.name = v("pl-name");
     for (const d in S.days) if (d < dr.start && !S.days[d].snap && d >= S.plan.start) S.days[d].snap = partsFor(d);
     S.planHist.push({ name: S.plan.name, stages: S.plan.stages, start: S.plan.start, end: addDays(dr.start, -1) });
     S.plan = { name: dr.name, stages: JSON.parse(JSON.stringify(dr.stages)), start: dr.start, offset: 0 }; const x = S.days[TODAY]; if (x) { delete x.rep; if (x.snap && x.snap.dyn) delete x.snap; } ui.plDraft = null; ui.plSeg = "hazir";
