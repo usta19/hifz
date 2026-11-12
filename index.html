@@ -543,6 +543,17 @@ details.dmore summary{cursor:pointer;list-style:none}details.dmore summary::-web
 .jdl .jseg{width:80%}.jcov{margin:8px 0}.jcov .jseg{height:8px}
 .item.efixed{opacity:.7}.item.efixed .t > b{text-decoration:line-through}
 
+.ayn{font-family:var(--quran);color:var(--m-gold,#9a6b1c);font-size:.7em;vertical-align:super;margin:0 .1em}.m15 .w.ayn{font-size:.62em;align-self:flex-start;cursor:default}
+.codec .cgrp{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-bottom:1px dashed var(--line)}.codec .cgrp:last-of-type{border-bottom:0}.cgn{min-width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}.codec .t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ekgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}.ekc{text-align:left;padding:8px 10px;font-size:13px;font-weight:500;display:flex;flex-direction:column}.ekc small{font-size:10px;opacity:.8}.ekc.on{background:var(--ok-soft,#e0f1e5);border-color:var(--ok);color:var(--ink)}
+.ekrow{display:grid;grid-template-columns:minmax(0,1.3fr) 2fr 28px;gap:8px;align-items:center;padding:3px 0}.ekn{padding:3px 0}.ekform{border-color:var(--gold)}
+
+.s-ham{background:var(--gold)}.hamhas{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.sc.fade{opacity:.45;background-image:repeating-linear-gradient(135deg,transparent 0 3px,rgba(255,255,255,.55) 3px 5px)}.s-read{background:color-mix(in srgb,var(--ok) 35%,var(--line))}
+.pcard{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);line-height:1.7}
+details.tur{padding:8px 0;border-bottom:1px solid var(--line)}details.tur:last-of-type{border-bottom:0}details.tur summary{cursor:pointer}details.tur.cur summary b{color:var(--accent)}
+.tstats{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:13px}.nmz{background:var(--sheet);border-radius:10px;padding:8px}
+
 @media (max-width:430px){.grid3{grid-template-columns:1fr 1fr}.methods{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.stats.s3{grid-template-columns:repeat(3,1fr)}.juzgrid{grid-template-columns:repeat(5,1fr)}}
 @media (max-width:360px){.grid2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
@@ -625,10 +636,10 @@ const MENZIL = [[1, 4], [5, 9], [10, 16], [17, 25], [26, 36], [37, 49], [50, 114
 const PLAN_DEFS = {
   sayfa: {
     ad: "Sayfa sayfa (kendi ölçün)", etiket: "Esnek",
-    kisa: "Her gün belirlediğin kadar sayfa sırayla okunur: 1, 2, 5, 10 ya da istediğin sayı. Süre kendiliğinden hesaplanır: 604 sayfa günde 10 sayfayla 61 günde, 5 sayfayla 121 günde biter. Düzenli gidemezsen bitiş tarihi uzar.",
+    kisa: "Her gün belirlediğin kadar sayfa okunur: 1, 2, 5, 10 ya da istediğin sayı. İstersen sadece her cüzün ilk ya da son sayfalarını seçersin (örneğin her cüzün son 10 sayfası: 300 sayfa, günde 10 sayfayla 30 gün). Süre kendiliğinden hesaplanır. Ardından ikinci aşama olarak \"Hatim döngüsü · 30 gün\" eklersen her gün tam cüz okunur; ilk aşamada verdiğin sayfalar ikinci kez geçip has olur.",
     uygun: "Kendi temposunu kendi belirlemek isteyen",
-    params: [["n", "Günde kaç sayfa", "num"], ["from", "Başlangıç cüzü", J30], ["to", "Bitiş cüzü", J30]],
-    def: { n: 10, from: 1, to: 30 }
+    params: [["n", "Günde kaç sayfa", "num"], ["bol", "Cüzün hangi kısmı", [["sira", "Baştan sona sırayla"], ["ilk", "Her cüzün ilk sayfaları"], ["son", "Her cüzün son sayfaları"]]], ["k", "Her cüzden kaç sayfa (ilk/son için)", "num"], ["from", "Başlangıç cüzü", J30], ["to", "Bitiş cüzü", J30]],
+    def: { n: 10, bol: "sira", k: 10, from: 1, to: 30 }
   },
   hatim: {
     ad: "Hatim döngüsü", etiket: "Klasik",
@@ -709,8 +720,13 @@ function buildPlan(type, p){
     }};
   }
   if (type === "sayfa") {
-    const [F, T] = juzRange(p.from, p.to), tot = T - F + 1, n = Math.max(1, Math.min(tot, +p.n || 10)), days = Math.ceil(tot / n);
-    return { cycle: days, day(i){ const pos = mod(i, days), a = F + pos * n, b = Math.min(T, a + n - 1); return { parts: partsForRange(a, b, "tekrar"), info: n + " sayfa/gün · " + (pos + 1) + "/" + days + ". gün" }; } };
+    const L = [], bol = p.bol || "sira", K = Math.max(1, +p.k || 10);
+    for (let j = p.from; j <= p.to; j++) { const [a, b] = juzPages(j), m = b - a + 1, kk = Math.min(K, m);
+      if (bol === "ilk") for (let q = a; q < a + kk; q++) L.push(q); else if (bol === "son") for (let q = b - kk + 1; q <= b; q++) L.push(q); else for (let q = a; q <= b; q++) L.push(q); }
+    const tot = L.length, n = Math.max(1, Math.min(tot, +p.n || 10)), days = Math.ceil(tot / n), lbl = bol === "ilk" ? "cüz başları" : bol === "son" ? "cüz sonları" : "";
+    return { cycle: days, day(i){ const pos = mod(i, days), sl = L.slice(pos * n, pos * n + n), parts = [];
+      let s0 = sl[0], pr = sl[0]; for (let x = 1; x <= sl.length; x++) { const q = sl[x]; if (q === pr + 1) { pr = q; continue; } parts.push(...partsForRange(s0, pr, "tekrar")); s0 = q; pr = q; }
+      return { parts, info: n + " sayfa/gün" + (lbl ? " · " + lbl : "") + " · " + (pos + 1) + "/" + days + ". gün" }; } };
   }
   if (type === "menzil") {
     return { cycle: 7, day(i){
@@ -993,7 +1009,7 @@ const docKeyOfDay = d => "d-" + d.slice(0, 7);
 function mark(...keys){ keys.forEach(k => { dirty.add(k); if (k.startsWith("tip-")) tipSave(k.slice(4)); }); persist(); }
 function markDay(d){ mark(docKeyOfDay(d)); }
 function bundle(k){
-  if (k === "core") return { settings: S.settings, plan: S.plan, planHist: S.planHist, weeks: S.weeks, quiz: S.quiz.slice(-300), bm: S.bm, muk: S.muk || null, share: !!S.share, shareName: S.shareName || "", imp: (S.imp || []).slice(-500), goals: S.goals || null, cardNew: S.cardNew || null, telafi: S.telafi || null, gen: S.gen || null, dinlet: S.dinlet || [], lastWho: S.lastWho || "", lastHow: S.lastHow || "", dlWho: S.dlWho || [], mode: S.mode || "plan", modeFrom: S.modeFrom || "", sepetGoal: S.sepetGoal || 20, remind: S.remind || null, whoNames: S.whoNames || [], light: S.light || null, odevDone: S.odevDone || {}, ver: S.ver || {} };
+  if (k === "core") return { settings: S.settings, plan: S.plan, planHist: S.planHist, weeks: S.weeks, quiz: S.quiz.slice(-300), bm: S.bm, muk: S.muk || null, share: !!S.share, shareName: S.shareName || "", imp: (S.imp || []).slice(-500), goals: S.goals || null, cardNew: S.cardNew || null, telafi: S.telafi || null, gen: S.gen || null, turlar: S.turlar || [], ek: S.ek || [], dinlet: S.dinlet || [], lastWho: S.lastWho || "", lastHow: S.lastHow || "", dlWho: S.dlWho || [], mode: S.mode || "plan", modeFrom: S.modeFrom || "", sepetGoal: S.sepetGoal || 20, remind: S.remind || null, whoNames: S.whoNames || [], light: S.light || null, odevDone: S.odevDone || {}, ver: S.ver || {} };
   if (k === "srs") return S.srs;
   if (k === "recs") return S.recCloud || {};
   if (k.startsWith("tip-")) return S.tips[k.slice(4)] || null;
@@ -1116,7 +1132,7 @@ function vBugun(){
   return `<div class="card hero"><span class="k">${sepetOn() ? "Ezber sepeti · programsız" : esc(S.plan.name || stageName(S.plan.stages[0]))}</span><span class="big">${sepetOn() ? sepetCounts().ok + " sağlam · " + (604 - sepetCounts().ok) + " kalan" : esc(pf.info || "")}</span>
    <div class="row between small"><span>${trD(TODAY)}</span><span class="num">${streak()} gün kesintisiz</span></div>
    <div class="row small num" style="gap:16px"><span>Bu hafta: ${fmtMin(wmin)}</span><span>${wpg} sayfa</span></div></div>
-   ${ui.dl ? vDlForm() : vDaySum(TODAY)}${vStages()}${vOdevCard()}${sepetOn() ? vSepetToday() : vSmartPlan()}${dayView(TODAY, true)}`;
+   ${ui.dl ? vDlForm() : vDaySum(TODAY)}${ui.ek && ui.tab === "bugun" ? vEkForm() : vEkToday()}${vStages()}${vOdevCard()}${sepetOn() ? vSepetToday() : vSmartPlan()}${dayView(TODAY, true)}`;
 }
 function vTakvim(){
   const [y, m] = ui.cal.split("-").map(Number), first = new Date(y, m - 1, 1), lead = (first.getDay() + 6) % 7, nd = new Date(y, m, 0).getDate();
@@ -1184,9 +1200,9 @@ function pageText(p){
     const hidden = ui.mMode === "test" && !ui.reveal[i], first = ui.mMode === "ilk" && !ui.reveal[i];
     const w = t.split(" ");
     const shown = hidden ? `<span class="hid">${"ـــــ ".repeat(Math.min(7, Math.max(1, Math.ceil(w.length / 3))))}</span>` : first ? esc(w.slice(0, 2).join(" ")) + ` <span class="hid">…</span>` : ((S.settings.tj || S.settings.mstyle === "tecvid") && ui.mMode === "oku" ? tajweedHtml(t) : esc(t));
-    cur += `<span class="ay ${ui.selAyah === i ? "sel" : ""} ${MUTIX.has(i) ? "hasm" : ""}" data-ayah="${i}" role="button" tabindex="0" aria-label="${esc(refStr(i))}">${shown} <span class="an">${arN(ay)}</span>${SJMAP.has(i) ? `<span class="sajda" title="Secde ayeti">۩</span>` : ""}</span> `;
+    cur += `<span class="ay ${ui.selAyah === i ? "sel" : ""} ${MUTIX.has(i) ? "hasm" : ""}" data-ayah="${i}" role="button" tabindex="0" aria-label="${esc(refStr(i))}">${shown} <span class="an">${arN(ay)}</span>${aynAt(i)}${SJMAP.has(i) ? `<span class="sajda" title="Secde ayeti">۩</span>` : ""}</span> `;
   }
-  flush(); return out;
+  flush(); return osm(out);
 }
 function mealText(p){
   return range(pStart(p), pEnd(p)).map(i => { const [s, ay] = ref(i);
@@ -1237,7 +1253,7 @@ function pageMap(p){
 function vPageMap(p){
   if (!TXT) return needText();
   const m = pageMap(p), a = pStart(p), b = pEnd(p);
-  return `<div class="tipsec"><h4>Ayet başları zinciri ve mana akışı</h4><p class="small muted">Sayfayı ayet başlarıyla zincir gibi ezberle; her halkanın ne anlattığını bil.</p>
+  return vCodeCard(p) + `<div class="tipsec"><h4>Ayet başları zinciri ve mana akışı</h4><p class="small muted">Sayfayı ayet başlarıyla zincir gibi ezberle; her halkanın ne anlattığını bil.</p>
     <ol class="chain">${m.ids.map(i => `<li><button class="chainbtn" data-goayah="${i}"><span class="ar cw" dir="rtl" lang="ar">${esc(firstWords(i, 3))} …</span><span class="small"><b class="num">${ref(i)[1]}.</b> ${esc(TRM(i).split(/[.;:]/)[0].slice(0, 95))}</span></button></li>`).join("")}</ol></div>
    <div class="tipsec"><h4>Sayfa köprüleri</h4>
     ${p > 1 ? `<div class="bridge"><span class="small muted">Önceki sayfa böyle biter</span><span class="ar cw" dir="rtl">… ${esc(lastWords(a - 1, 4))}</span><span class="small muted">bu sayfa böyle başlar</span><span class="ar cw strong" dir="rtl">${esc(firstWords(a, 4))} …</span></div>` : ""}
@@ -1258,6 +1274,8 @@ function tipPrompt(p){
   const ay = range(a, b).map(i => `[${ref(i).join(":")}] ${AR(i)}\nMeal: ${TRM(i)}`).join("\n");
   const muts = range(a, b).filter(i => MUTIX.has(i)).slice(0, 6).map(i => { const g = MUTG[MUTIX.get(i)[0]]; const o = g[1][0][0]; return `${ref(i).join(":")} ↔ ${refStr(o)}: ${AR(o)}`; }).join("\n");
   return `Sen Türkiye'de hafızlık eğitimi veren, Arapça bilen deneyimli bir hocasın. Bir hafız öğrencisi Medine mushafının ${p}. sayfasını (${juzOf(a)}. cüz, ${surs.join(", ")}) sağlam ezberlemek ve unutmamak için akılda kalıcı ipuçları istiyor.
+
+Sayfada ${b - a + 1} ayet var. Mana bütünlüğüne göre (Kur'an Yolu tefsirinin pasajları ve rükû sonları) önerilen ayet kodlaması: ${pageCode(p).txt}. Ezber ipuçlarını bu gruplara göre ver; vakf-ı lâzım ve durmanın evlâ olduğu yerleri gruplar arası sınır say. Gerekirse daha iyi bir gruplama öner.
 
 Sayfanın ayetleri (Arapça ve Diyanet meali):
 ${ay}
@@ -1356,7 +1374,7 @@ function vMushaf(){
      ${S.settings.tj ? tjLegend() : ""}<button class="ghost small" data-tab="dinle">Kendi kaydımı dinle</button></div>` : ""}
    ${ui.mMode === "test" || ui.mMode === "ilk" ? `<div class="row small muted">Gizli ayete dokun, açılsın. <button class="ghost small" data-act="revall">Tümünü aç</button><button class="ghost small" data-act="hideall">Gizle</button></div>` : ""}${ui.mMode === "satir" ? `<div class="row small muted">Her satırın yalnız ilk kelimesi görünür; ezberden devam et, satıra dokununca açılır. <button class="ghost small" data-act="lrall">Tümünü aç</button><button class="ghost small" data-act="lrnone">Gizle</button></div>` : ""}${ui.mMode === "sil" ? `<div class="row small muted nowrap">Silinen: <b class="num">%${(+(ui.silLv || 2)) * 20}</b><button class="ghost small" data-sil="-1" aria-label="Daha az sil">−</button><button class="ghost small" data-sil="1" aria-label="Daha çok sil">+</button><span>Her turda biraz daha sil; sayfanın görüntüsü aynı kalır.</span></div>` : ""}`;
   const nRec = pgRecs(p).length;
-  const nav = `<div class="card mbar">${pager}${scrubber(p)}${tools}<div class="row"><button class="small ${ui.pgRec ? "on" : "ghost"} precbtn" data-act="pgrec">♪ Bu sayfanın kayıtları${nRec ? " (" + nRec + ")" : ""}</button></div></div>${ui.mMode === "dinleyici" ? vListenBar() : ""}${ui.pgRec ? vPageRecs(p) : ""}`;
+  const nav = `<div class="card mbar">${pager}${scrubber(p)}${tools}<div class="row"><button class="small ${ui.pgRec ? "on" : "ghost"} precbtn" data-act="pgrec">♪ Bu sayfanın kayıtları${nRec ? " (" + nRec + ")" : ""}</button>${ekOn() ? `<button class="small ${ui.pgEk ? "on" : "ghost"} precbtn" data-act="pgek">✎ Ek çalışma</button>` : ""}</div>${pageCard(p)}</div>${ui.mMode === "dinleyici" ? vListenBar() : ""}${ui.pgRec ? vPageRecs(p) : ""}${ui.ek && ui.tab === "mushaf" ? vEkForm() : ui.pgEk && ekOn() ? vEkPage(p) : ""}`;
   const gp = ui.goOpen ? goPanel() : "";
   if (foc) return `<section class="focus">${nav}${mushafSheet(p)}${sel != null ? ayahPanel(sel) : ""}</section>${gp}`;
   return `<section>${nav}
@@ -1605,7 +1623,7 @@ function vUlumRehber(){
 /* ===== Kendini dinle: ses kaydı ve takip ===== */
 let AUDIO = null;
 function idb(){ return new Promise((res, rej) => { try { const r = indexedDB.open("hifz-ses", 1); r.onupgradeneeded = () => r.result.createObjectStore("rec", { keyPath: "id" }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); }
-async function recList(){ try { const db = await idb(); return await new Promise(res => { const out = []; const tx = db.transaction("rec").objectStore("rec").openCursor(); tx.onsuccess = e => { const c = e.target.result; if (c) { const v = c.value; out.push({ id: v.id, p: v.p, p2: v.p2 || v.p, d: v.d, t: v.t || "", n: v.n || "", g: v.g || "", dur: v.dur || 0, errs: v.errs || [], ref: !!v.ref, who: v.who || "", title: v.title || "", video: /^video\//.test(v.mime || (v.blob && v.blob.type) || ""), size: v.size || (v.blob ? v.blob.size : 0), broken: !v.buf }); c.continue(); } else res(out); }; tx.onerror = () => res(out); }); } catch (e) { return []; } }
+async function recList(){ try { const db = await idb(); return await new Promise(res => { const out = []; const tx = db.transaction("rec").objectStore("rec").openCursor(); tx.onsuccess = e => { const c = e.target.result; if (c) { const v = c.value; out.push({ id: v.id, p: v.p, p2: v.p2 || v.p, d: v.d, t: v.t || "", n: v.n || "", g: v.g || "", dur: v.dur || 0, errs: v.errs || [], ref: !!v.ref, who: v.who || "", title: v.title || "", cid: v.cid || "", video: /^video\//.test(v.mime || (v.blob && v.blob.type) || ""), size: v.size || (v.blob ? v.blob.size : 0), broken: !v.buf }); c.continue(); } else res(out); }; tx.onerror = () => res(out); }); } catch (e) { return []; } }
 async function recSave(blob, p, n, p2){ const buf = await blob.arrayBuffer(), mime = blob.type || "audio/mp4"; if (!buf.byteLength) throw new Error("boş kayıt"); const db = await idb(), id = uid(), now = new Date(); await new Promise((res, rej) => { const tx = db.transaction("rec", "readwrite"); tx.objectStore("rec").put({ id, p, p2: Math.max(p, p2 || p), d: TODAY, t: pad(now.getHours()) + ":" + pad(now.getMinutes()), n, g: "", dur: 0, errs: [], buf, mime, size: buf.byteLength }); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); });
   const chk = await recGetLocal(id); if (!chk || !chk.blob || !chk.blob.size) throw new Error("kayıt doğrulanamadı"); return id; }
 function recNorm(v){ if (v && !v.blob && v.buf) v.blob = new Blob([v.buf], { type: v.mime || "audio/mp4" }); return v; }
@@ -1639,7 +1657,7 @@ async function micStart(){
 }
 function micStop(){ if (MREC) MREC.rec.stop(); }
 setInterval(() => { const el = $("#mrect"); if (el && MREC) { const t = Math.floor((Date.now() - MREC.t0) / 1000); el.textContent = pad(Math.floor(t / 60)) + ":" + pad(t % 60); } }, 500);
-function finishRec(blob, p, n, o){ o = o || {}; const p2 = Math.min(604, o.p2 || +rcv().p2 || p), who = (o.who != null ? o.who : rcv().who || "").trim(), isRef = o.ref != null ? o.ref : (!!rcv().ref || (who && who !== "Ben")); ui.newRec = false; ui.rc = null; whoRemember(who); recSave(blob, p, n, p2).then(async id => { draftClear(); DRAFT = null; if (isRef || who) await recUpdate(id, r => { if (isRef) r.ref = true; if (who) r.who = who; }); if (S.settings.recAuto) recBackup(id, true); RECS = null; toast("Kayıt arşive eklendi"); playRec(blob, recLabel({ p, p2, n }), p, id); }).catch(() => { toast("Kayıt bu cihaza saklanamadı; yine de dinleyebilirsin"); playRec(blob, "Sayfa " + p, p); }); }
+function finishRec(blob, p, n, o){ o = o || {}; const p2 = Math.min(604, o.p2 || +rcv().p2 || p), who = (o.who != null ? o.who : rcv().who || "").trim(), isRef = o.ref != null ? o.ref : (!!rcv().ref || (who && who !== "Ben")); ui.newRec = false; ui.rc = null; const ttl0 = rcv().title || "", cid0 = rcv().cid || ""; whoRemember(who); recSave(blob, p, n, p2).then(async id => { draftClear(); DRAFT = null; if (isRef || who || ttl0 || cid0) await recUpdate(id, r => { if (isRef) r.ref = true; if (who) r.who = who; if (ttl0) r.title = ttl0; if (cid0) r.cid = cid0; }); if (cid0.startsWith("ek:")) ekAdd({ k: cid0.slice(3), f: p, t: p2, txt: "Sesli anlatım", rec: id }); if (S.settings.recAuto) recBackup(id, true); RECS = null; toast("Kayıt arşive eklendi"); playRec(blob, recLabel({ p, p2, n }), p, id); }).catch(() => { toast("Kayıt bu cihaza saklanamadı; yine de dinleyebilirsin"); playRec(blob, "Sayfa " + p, p); }); }
 const recLabel = r => recTitle(r);
 const fmtSec = x => { x = Math.round(x || 0); return Math.floor(x / 60) + ":" + pad(x % 60); };
 const GRADE = { ok: "Sağlam", warn: "Orta", bad: "Zayıf" };
@@ -2052,7 +2070,7 @@ function m15Text(p, tj){
   const PL = pageLines(p); if (!PL) { loadLines(); return null; }
   const T = pageTokens(p, tj), mode = ui.mMode, lv = +(ui.silLv || 2), LR = ui.lineRev || (ui.lineRev = {});
   const quiz = mode === "satir" || mode === "sil";
-  return `<div class="m15 ${quiz ? "mquiz" : ""}">` + PL.map(o => {
+  return osm(`<div class="m15 ${quiz ? "mquiz" : ""}">` + PL.map(o => {
     if (o.kind === "h") return `<div class="ml mlh">${cartouche(o.s)}</div>`;
     if (o.kind === "b") return `<div class="ml mlb">${BASM}</div>`;
     if (o.kind === "e") return `<div class="ml"></div>`;
@@ -2065,14 +2083,14 @@ function m15Text(p, tj){
       else if (mode === "sil") hide = !open && hashW(t.i, t.k) < lv * 20;
       const cls = `w ${ui.selAyah === t.i ? "sel" : ""} ${MUTIX.has(t.i) && mode === "oku" ? "hasm" : ""} ${hide ? "hidw" : ""}`;
       const body = hide ? esc(t.txt) : (t.html || esc(t.txt));
-      const end = t.last ? `<span class="w an" ${quiz || mode === "dinleyici" ? "" : `data-ayah="${t.i}"`}>${arN(ref(t.i)[1])}</span>${SJMAP.has(t.i) ? `<span class="w sajda">۩</span>` : ""}` : "";
+      const end = t.last ? `<span class="w an" ${quiz || mode === "dinleyici" ? "" : `data-ayah="${t.i}"`}>${arN(ref(t.i)[1])}</span>${aynAt(t.i, "w ayn")}${SJMAP.has(t.i) ? `<span class="w sajda">۩</span>` : ""}` : "";
       const rub = t.k === 0 && RBSET.has(t.i) && ref(t.i)[1] !== 1 ? `<span class="w rub">۞</span>` : "";
       const lw = mode === "dinleyici", lk = lw && ui.lmk && ui.lmk[t.i * 100 + t.k];
       return rub + `<span class="${cls} ${lk ? "lmk" : ""}" ${lw ? `data-lw="${t.i}|${t.k}" role="button"` : quiz ? "" : `data-ayah="${t.i}"`}>${body}</span>` + end;
     }).join("");
     const short = o.b - o.a <= 4 && (PL[o.n + 1] ? PL[o.n + 1].kind === "h" : true);
     return `<div class="ml ${short ? "short" : ""}" ${quiz ? `data-mline="${key}" role="button" tabindex="0" aria-label="${o.n + 1}. satır"` : ""}><i class="lno">${o.n + 1}</i>${words}</div>`;
-  }).join("") + `</div>`;
+  }).join("") + `</div>`);
 }
 function fitLines(){
   const sh = document.querySelector(".m15"); if (!sh) return;
@@ -2442,24 +2460,24 @@ function vSepetToday(){
      <div class="row small">Nasıldı?${[["ok", "Sağlam"], ["warn", "Orta"], ["bad", "Zayıf"]].map(([v, l]) => `<button class="ghost small" data-sreadst="${v}">${l}</button>`).join("")}<button class="ghost small" data-act="sreadundo">Son ekleneni geri al</button></div></div>` : ""}</div>`;
 }
 function vSepet(){
-  const C = sepetCounts(), tot = 604, brush = ui.brush ?? "ok", sel = ui.rangeA;
+  const C = sepetCounts(), tot = 604, brush = ui.brush ?? "ok", sel = ui.rangeA, RP = ui.spView === "tur" ? roundPages() : null; let nFade = 0; for (let q = 1; q <= 604; q++) if (fadeOf(q)) nFade++;
   const pct = v => (v / tot * 100).toFixed(1);
   const rows = Array.from({ length: 30 }, (_, k) => { const j = k + 1, [a, b] = juzPages(j), cells = []; let ok = 0;
-    for (let p = a; p <= b; p++) { const s = pst(p); if (s === "ok") ok++; cells.push(`<button class="sc s-${s || "none"} ${sel === p ? "sa" : ""} ${readToday().includes(p) ? "rd" : ""}" data-sp="${p}" aria-label="Sayfa ${p}: ${PST[s]}"></button>`); }
+    for (let p = a; p <= b; p++) { const s = pst(p); if (s === "ok") ok++; cells.push(`<button class="sc ${RP ? (RP.dl[p] ? "s-" + (s || "ok") : RP.read.has(p) ? "s-read" : "s-none") : "s-" + (s || "none") + (s === "ok" && fadeOf(p) ? " fade" : "")} ${sel === p ? "sa" : ""} ${readToday().includes(p) ? "rd" : ""}" data-sp="${p}" aria-label="Sayfa ${p}: ${PST[s]}"></button>`); }
     return `<div class="srow"><button class="sj ${ok === b - a + 1 ? "full" : ""}" data-sj="${j}" aria-label="${j}. cüzün hepsini işaretle">${j}</button><div class="scells">${cells.join("")}</div><span class="tiny num">${ok}/${b - a + 1}</span></div>`; }).join("");
   const kalan = []; for (let p = 1; p <= 604; p++) if (pst(p) !== "ok") kalan.push(p);
   const byJ = {}; kalan.forEach(p => (byJ[juzOfPage(p)] = byJ[juzOfPage(p)] || []).push(p));
   return `<section><h2>Ezber sepeti</h2>
    <div class="card"><div class="sbig"><div><b class="num">${C.ok}</b><span>sağlam sayfa</span></div><div><b class="num">${tot - C.ok}</b><span>kalan</span></div><div><b class="num">%${pct(C.ok)}</b><span>tamam</span></div></div>
     <div class="sbar"><i class="s-ok" style="width:${pct(C.ok)}%"></i><i class="s-warn" style="width:${pct(C.warn)}%"></i><i class="s-bad" style="width:${pct(C.bad)}%"></i></div>
-    <p class="tiny">Sağlam ${C.ok} · Orta ${C.warn} · Zayıf ${C.bad} · İşaretsiz ${C[""]}</p>${vSepetSummary(false)}</div>
-   <div class="card"><div class="row between"><h3>İşaretle</h3><label class="inline small"><input type="checkbox" id="sp-range" ${ui.rangeMode ? "checked" : ""}> Aralık seç</label></div>
+    <p class="tiny">Sağlam ${C.ok}${nFade ? ` (${nFade} tanesi soluk: uzun süredir okunmadı)` : ""} · Orta ${C.warn} · Zayıf ${C.bad} · İşaretsiz ${C[""]}</p>${vSepetSummary(false)}</div>
+   <div class="card">${seg("spView", [["durum", "Genel durum"], ["tur", "Bu tur"]], ui.spView || "durum")}${RP ? `<p class="small">Bu tur ${trD(RP.from)} tarihinde başladı: <b>${Object.keys(RP.dl).length}</b> sayfa dinletildi, <b>${RP.read.size}</b> sayfa okundu. Renkli: bu turda dinletilenler · açık yeşil: sadece okunanlar · gri: bu turda henüz sıra gelmeyenler. Genel durum kaybolmaz.</p>` : ""}<div class="row between"><h3>İşaretle</h3><label class="inline small"><input type="checkbox" id="sp-range" ${ui.rangeMode ? "checked" : ""}> Aralık seç</label></div>
     <div class="seg">${[["ok", "Sağlam"], ["warn", "Orta"], ["bad", "Zayıf"], ["", "Temizle"]].map(([v, l]) => `<button class="${brush === v ? "on" : ""} br-${v || "none"}" data-brush="${v}">${l}</button>`).join("")}</div>
     <p class="tiny">${ui.rangeMode ? (sel ? `Başlangıç s. ${sel}. Şimdi bitiş sayfasına dokun.` : "Başlangıç sayfasına, sonra bitiş sayfasına dokun; aradaki hepsi işaretlenir.") : "Bir kutuya dokununca o sayfa, soldaki cüz numarasına dokununca bütün cüz seçili renkle işaretlenir."} Uzun basmana gerek yok. Bugün okuduğun sayfalar noktalı görünür.</p>
     <div class="sgrid">${rows}</div>
     <div class="row"><button class="ghost small" data-act="sallok">Hepsini sağlam say</button><button class="ghost small" data-act="sclear">Hepsini temizle</button></div></div>
    <div class="card"><h3>Kalan ${kalan.length} sayfa</h3>${kalan.length ? Object.entries(byJ).map(([j, L]) => `<div class="kalan"><b class="small">${j}. cüz</b> <span class="small">${rangesOf(L).map(([a, b]) => `<button class="chip c-${pst(a) || "none"}" data-open="${a}">${a === b ? a : a + "–" + b}</button>`).join(" ")}</span></div>`).join("") : `<p class="empty">Bütün sayfalar sağlam sepette. Maşallah!</p>`}</div>
-   ${vPageNotes()}
+   ${vPageNotes()}${vRounds(4)}
    <div class="card"><h3>Kullanım şekli</h3>${seg("mode", [["plan", "Programlı"], ["sepet", "Programsız (sepet)"]], S.mode === "sepet" ? "sepet" : "plan")}
     <p class="tiny">Programsızda Bugün ekranı plan yerine "Bugün ne okuyayım?" önerisini gösterir; okuduklarını "Okudum" ile işaretlersin. Sepet ve sayfa durumları iki şekilde de aynıdır; istediğin zaman geçebilirsin.</p></div>
    ${vSepetToday()}</section>`;
@@ -2548,19 +2566,19 @@ function vGenel(){
    <div class="card"><div class="row between"><h3>Sağlamlık</h3><button class="ghost small" data-tab="sepet">Sepeti aç</button></div>
     <div class="sbig"><div><b class="num">${C.ok}</b><span>sağlam</span></div><div><b class="num">${C.warn + C.bad}</b><span>orta/zayıf</span></div><div><b class="num">%${pct(C.ok)}</b><span>tamam</span></div></div>
     <div class="sbar"><i class="s-ok" style="width:${pct(C.ok)}%"></i><i class="s-warn" style="width:${pct(C.warn)}%"></i><i class="s-bad" style="width:${pct(C.bad)}%"></i></div>
-    ${vSepetSummary(true)}<details><summary class="small">Cüz cüz sağlamlık</summary><div class="jbars">${jbars}</div></details></div>
+    ${(() => { let n = 0; for (let q = 1; q <= 604; q++) if (fadeOf(q)) n++; return n ? `<p class="small gold">${n} sağlam sayfa solmaya yüz tuttu (uzun süredir okunmadı).</p>` : ""; })()}${vSepetSummary(true)}<details><summary class="small">Cüz cüz sağlamlık</summary><div class="jbars">${jbars}</div></details></div>
    <div class="card"><h3>Dinletme</h3>
     <div class="stats"><div class="stat"><b class="num">${30 - never.length}/30</b><span>dinletilmiş cüz</span></div><div class="stat"><b class="num">${logs30.length}</b><span>son 30 gün dinletme</span></div><div class="stat"><b class="num">${pgDl}</b><span>dinletilen sayfa</span></div><div class="stat"><b class="num">${recMine}</b><span>kendi kaydın</span></div></div>
     <div class="jdls">${jDl}</div>
-    <p class="small">${never.length ? `<b>Hiç dinletilmeyen cüzler:</b> ${jRanges(never)}` : "Bütün cüzler en az bir kez dinletildi."}</p>
+    <p class="small">${never.length ? `<b>Hiç dinletilmeyen cüzler:</b> ${jRanges(never)}` : "Bütün cüzler en az bir kez dinletildi."}</p>${vHamHas()}
     <p class="tiny">Renk son dinletmeden: yeşil 0–2 hata, sarı 3–6 hata, kırmızı fazlası. Dinletme kaydı Takip > Cüzler'den ya da plandaki "Dinleterek" parçalardan gelir.</p></div>
    <div class="card"><h3>Son 30 gün</h3><div class="stats"><div class="stat"><b class="num">${r30}</b><span>sayfa okundu</span></div><div class="stat"><b class="num">${fmtMin(m30)}</b><span>süre</span></div><div class="stat"><b class="num">${streak()}</b><span>gün seri</span></div></div>
-    <div class="ystack">${Object.entries(yolN).map(([y, n]) => `<span class="kind ${YOL[y][1]}">${YOL[y][0]}: ${n} s.</span>`).join(" ")}</div></div>
+    <div class="ystack">${Object.entries(yolN).map(([y, n]) => `<span class="kind ${YOL[y][1]}">${YOL[y][0]}: ${n} s.</span>`).join(" ")}</div></div>${vRounds(8)}
    <div class="card"><div class="row between"><h3>Son dinletmeler</h3><button class="small" data-act="dlnew2">+ Dinlettim</button></div>${vDlList(15)}</div>
    <div class="card"><h3>Açık hatalar (${totE})${fixN ? ` <span class="small good-t">· ${fixN} düzeldi</span>` : ""}</h3><div class="chips">${ERRK.map(([k, l]) => byK[k] ? `<span class="chip c-bad">${esc(l.split(" ")[0])} ${byK[k]}</span>` : "").join("")}</div>
     ${topP.length ? topP.map(([p, L, n]) => `<details class="perr"><summary><span class="chip c-bad num">${n}</span> <b>s. ${p}</b> <span class="small muted">${esc(SN(ref(pStart(p))[0]))} · ${juzOfPage(p)}. cüz</span></summary>${L.slice(0, 12).map(e => `<div class="small">${errDetail(e)}</div>`).join("")}<button class="ghost small" data-open="${p}">Sayfayı aç</button></details>`).join("") : `<p class="small muted">Hata kaydı yok.</p>`}</div>
    ${risk.length ? `<div class="card"><h3>Unutulmaya yüz tutanlar</h3><p class="small">${risk.map(([p, k]) => `<button class="chip c-${k.r >= .8 ? "bad" : "warn"}" data-open="${p}">s. ${p}${k.days != null ? " · " + k.days + " gün" : ""}</button>`).join(" ")}</p></div>` : ""}
-   <div class="row"><button class="ghost small" data-tab="takip">Ayrıntılı takip</button><button class="ghost small" data-tab="ist">İstatistik ve rozetler</button><button class="ghost small" data-tab="rapor">Hoca raporu</button></div></section>`;
+   ${vEkAnaliz()}<div class="row"><button class="ghost small" data-tab="takip">Ayrıntılı takip</button><button class="ghost small" data-tab="ist">İstatistik ve rozetler</button><button class="ghost small" data-tab="rapor">Hoca raporu</button></div></section>`;
 }
 
 /* ===== Dinletme oturumu: her yere bağlı tek kayıt ===== */
@@ -2669,14 +2687,232 @@ function vDaySum(d){
   const legacy = []; for (const j in S.juz) (S.juz[j].logs || []).forEach(l => { if (l.d === d && !l.sid) legacy.push([j, l]); });
   const st = dayStatus(d), stl = { full: ["c-ok", "Tamam"], part: ["c-warn", "Yarım"], miss: ["c-bad", "Yapılmadı"], none: ["c-none", "Kayıt yok"] }[st] || ["c-none", ""];
   const pick = (k, L, cur) => `<div class="qrow"><span class="small muted">${k === "ev" ? "Nasıldı?" : "Manalar kafanda netleşti mi?"}</span><div class="qseg">${L.map(([v, l]) => `<button class="${cur === v ? "on" : ""}" data-dq="${k}|${v}">${l}</button>`).join("")}</div></div>`;
-  return `<div class="card dsum"><div class="row between nowrap"><span><b>${d === TODAY ? "Bugün" : trDY(d)}</b> <span class="chip ${stl[0]}">${stl[1]}</span></span>${d <= TODAY ? `<button class="primary small" data-dlday="${d}">+ Dinlettim</button>` : ""}</div>
+  return `<div class="card dsum"><div class="row between nowrap"><span><b>${d === TODAY ? "Bugün" : trDY(d)}</b> <span class="chip ${stl[0]}">${stl[1]}</span></span>${d <= TODAY ? `<span class="row nowrap"><button class="ghost small" data-nmzopen="${d}">Namazda okudum</button><button class="primary small" data-dlday="${d}">+ Dinlettim</button></span>` : ""}</div>
+   ${ui.nmz === d ? `<div class="nmz"><span class="small">Namazda okuduğun sayfalar:</span><div class="grid3"><label>Sayfadan<input type="number" id="nm-f" min="1" max="604" inputmode="numeric" value="${(dlDefaultRange()[0])}"></label><label>Sayfaya<input type="number" id="nm-t" min="1" max="604" inputmode="numeric" value="${(dlDefaultRange()[1])}"></label><label>&nbsp;<button class="primary small" data-act="nmzsave">Kaydet</button></label></div></div>` : ""}
+   ${x.namaz && x.namaz.length ? `<div class="dline wrap"><span class="small muted">Namazda:</span><span class="small">s. ${jRanges([...new Set(x.namaz)])}</span></div>` : ""}
    <div class="dstats"><span><b class="num">${rp}</b> sayfa</span><span><b class="num">${fmtMin(x.min || 0)}</b></span><span><b class="num">${sess.length + legacy.length}</b> dinletme</span><span><b class="num">${errs.length}</b> hata</span>${fixed.length ? `<span class="good-t"><b class="num">${fixed.length}</b> düzeldi</span>` : ""}</div>
    ${sess.map(s => `<div class="dline"><span class="chip ${s.errs.length ? "c-warn" : "c-ok"}">${s.errs.length ? s.errs.length + " hata" : "Hatasız"}</span><span class="small">s. ${s.f}${s.t !== s.f ? "–" + s.t : ""} · ${esc(s.who || "—")}${s.how ? " · " + DLN[s.how] : ""}</span></div>`).join("")}
    ${legacy.map(([j, l]) => `<div class="dline">${chip(colorOf(l))}<span class="small">${j}. cüz · ${l.h} hata · ${l.t} takılma${l.w ? " · " + esc(l.w) : ""}</span></div>`).join("")}
    ${errs.length ? `<div class="dline wrap"><span class="small muted">Hatalar:</span><span class="small">${errs.slice(0, 5).map(e => (e.fix ? `<s>${errShort(e)}</s>` : errShort(e))).join(" · ")}${errs.length > 5 ? " …" : ""}</span></div>` : ""}
    ${fixed.length ? `<div class="dline wrap"><span class="small good-t">Düzelen:</span><span class="small">${fixed.slice(0, 5).map(e => errShort(e) + ` <span class="muted">(${trD(e.d)})</span>`).join(" · ")}</span></div>` : ""}
+   ${(() => { const L = (S.ek || []).filter(z => z.d === d); return L.length ? `<div class="dline wrap"><span class="small muted">Ek çalışma:</span><span class="small">${L.map(z => esc(EKN[z.k]) + " s. " + z.f + (z.t !== z.f ? "–" + z.t : "")).join(" · ")}</span></div>` : ""; })()}
    ${pick("ev", EVAL, x.ev)}${pick("mana", MANA, x.mana)}</div>`;
 }
+
+const RUKU_END = new Set([6, 13, 26, 35, 45, 52, 65, 67, 77, 88, 92, 102, 109, 118, 127, 135, 147, 153, 158, 169, 173, 182, 188, 194, 202, 216, 222, 227, 234, 237, 241, 248, 254, 259, 263, 266, 272, 279, 287, 289, 292, 301, 312, 322, 333, 346, 355, 363, 372, 383, 393, 401, 412, 421, 435, 440, 447, 463, 472, 481, 492, 502, 506, 514, 517, 525, 534, 542, 551, 562, 568, 579, 583, 588, 592, 596, 604, 607, 618, 626, 633, 644, 654, 663, 668, 673, 679, 687, 694, 702, 711, 718, 724, 734, 745, 754, 761, 768, 776, 783, 788, 798, 808, 818, 829, 838, 843, 848, 858, 870, 878, 882, 888, 898, 909, 917, 928, 932, 938, 942, 953, 963, 978, 984, 992, 1000, 1006, 1011, 1017, 1025, 1037, 1046, 1052, 1061, 1079, 1082, 1094, 1100, 1104, 1110, 1115, 1124, 1134, 1141, 1159, 1169, 1178, 1187, 1196, 1203, 1207, 1217, 1223, 1228, 1234, 1240, 1250, 1258, 1263, 1271, 1276, 1293, 1300, 1306, 1314, 1323, 1333, 1344, 1352, 1356, 1363, 1373, 1383, 1393, 1403, 1416, 1423, 1433, 1445, 1455, 1466, 1472, 1480, 1496, 1507, 1521, 1532, 1540, 1555, 1567, 1581, 1595, 1601, 1615, 1624, 1630, 1637, 1644, 1652, 1663, 1674, 1688, 1699, 1706, 1713, 1724, 1732, 1737, 1743, 1749, 1755, 1761, 1770, 1776, 1783, 1790, 1801, 1816, 1826, 1845, 1861, 1880, 1900, 1909, 1921, 1925, 1934, 1940, 1950, 1960, 1965, 1970, 1976, 1983, 1989, 2000, 2010, 2019, 2028, 2038, 2050, 2058, 2068, 2080, 2088, 2098, 2105, 2112, 2121, 2128, 2139, 2151, 2156, 2161, 2170, 2183, 2188, 2192, 2198, 2209, 2221, 2240, 2249, 2264, 2289, 2299, 2314, 2331, 2347, 2371, 2401, 2423, 2436, 2451, 2462, 2475, 2482, 2492, 2511, 2523, 2532, 2557, 2575, 2594, 2604, 2616, 2619, 2627, 2632, 2642, 2651, 2658, 2666, 2672, 2694, 2704, 2722, 2749, 2764, 2790, 2800, 2810, 2816, 2824, 2830, 2840, 2847, 2851, 2854, 2863, 2874, 2888, 2898, 2914, 2931, 2940, 2964, 2983, 3000, 3035, 3053, 3071, 3090, 3106, 3122, 3158, 3172, 3189, 3202, 3216, 3224, 3240, 3251, 3264, 3272, 3279, 3293, 3301, 3311, 3326, 3339, 3352, 3361, 3369, 3383, 3390, 3402, 3408, 3418, 3427, 3435, 3448, 3461, 3468, 3479, 3487, 3502, 3513, 3524, 3532, 3540, 3552, 3559, 3566, 3572, 3584, 3590, 3600, 3605, 3614, 3626, 3635, 3641, 3650, 3659, 3666, 3673, 3685, 3696, 3704, 3716, 3736, 3754, 3771, 3787, 3808, 3861, 3900, 3925, 3969, 3983, 3995, 4009, 4033, 4057, 4066, 4078, 4088, 4098, 4109, 4120, 4127, 4132, 4141, 4152, 4159, 4169, 4182, 4192, 4200, 4210, 4217, 4225, 4235, 4242, 4249, 4261, 4271, 4280, 4290, 4300, 4314, 4324, 4339, 4349, 4359, 4369, 4380, 4391, 4413, 4442, 4455, 4472, 4483, 4493, 4498, 4509, 4519, 4529, 4535, 4544, 4555, 4563, 4572, 4582, 4592, 4599, 4608, 4611, 4621, 4629, 4644, 4658, 4674, 4697, 4720, 4734, 4762, 4783, 4808, 4815, 4845, 4867, 4885, 4900, 4925, 4945, 4978, 5016, 5052, 5074, 5084, 5093, 5099, 5103, 5109, 5116, 5125, 5135, 5142, 5149, 5155, 5162, 5171, 5176, 5184, 5187, 5195, 5198, 5208, 5216, 5223, 5228, 5235, 5240, 5254, 5270, 5303, 5322, 5359, 5374, 5409, 5418, 5438, 5446, 5465, 5474, 5493, 5494, 5525, 5550, 5580, 5590, 5612, 5621, 5661, 5671, 5701, 5711, 5737, 5757, 5799, 5828, 5847, 5883, 5908, 5930, 5947, 5966, 5992, 6022, 6042, 6057, 6078, 6089, 6097, 6105, 6124, 6129, 6137, 6145, 6156, 6167, 6175, 6178, 6187, 6192, 6196, 6203, 6206, 6212, 6215, 6220, 6224, 6229, 6235]);
+
+/* ===== Osmanlı (Türkiye baskısı) görünümü: işaret karşılıkları ve rükû (ayn) ===== */
+const SUR_END = new Set(); { let o = 0; META.S.forEach(s => { o += s[2]; SUR_END.add(o - 1); }); }
+const isOsm = () => (S.settings.mstyle || "medine") === "osmanli";
+function osm(html){ return isOsm() ? html.replace(/ۗ/g, "ؕ").replace(/ۖ/g, "ؗ") : html; }
+function aynAt(i, cls){ return isOsm() && RUKU_END.has(i) && !SUR_END.has(i) ? `<span class="${cls || "ayn"}" title="Rükû (vakf-ı ayn)">ع</span>` : ""; }
+
+/* ===== Ayet sayısı ve kodlama önerisi ===== */
+function pageCode(p){
+  const a = pStart(p), b = pEnd(p), n = b - a + 1, KY = XD.kuranyolu || (loadX("kuranyolu", "src/kuranyolu.json"), null), why = {}, strong = {};
+  const kyLen = i => { if (!KY || KY.i[i] == null) return 1; let x = i, y = i; while (x > 0 && KY.i[x - 1] === KY.i[i]) x--; while (y < 6235 && KY.i[y + 1] === KY.i[i]) y++; return y - x + 1; };
+  for (let i = a; i < b; i++) {
+    if (ref(i + 1)[1] === 1) { why[i] = "sure başı"; strong[i] = 1; }
+    else if (RUKU_END.has(i)) { why[i] = "rükû (ع)"; strong[i] = 1; }
+    else if (KY && KY.i[i] != null && KY.i[i + 1] != null && KY.i[i] !== KY.i[i + 1] && (kyLen(i) > 1 || kyLen(i + 1) > 1)) why[i] = "mana bölümü";
+  }
+  let segs = [], cur = [];
+  for (let i = a; i <= b; i++) { cur.push(i); if (why[i] || i === b) { segs.push(cur); cur = []; } }
+  let groups = [];
+  segs.forEach(g => { if (g.length <= 5) { groups.push(g); return; } const k = Math.ceil(g.length / 4), base = Math.floor(g.length / k); let r = g.length % k, x = 0; for (let q = 0; q < k; q++) { const sz = base + (r-- > 0 ? 1 : 0); groups.push(g.slice(x, x + sz)); x += sz; } });
+  for (let k = 0; k < groups.length; k++) { const g = groups[k]; if (g.length !== 1 || groups.length === 1) continue;
+    const prev = groups[k - 1], next = groups[k + 1], endPrev = prev && prev[prev.length - 1];
+    if (prev && !strong[endPrev] && prev.length <= 4) { prev.push(...g); groups.splice(k--, 1); }
+    else if (next && !strong[g[0]] && next.length <= 4) { next.unshift(...g); groups.splice(k--, 1); } }
+  return { n, groups, why, txt: n + " ayet: " + groups.map(g => g.length).join(" + ") };
+}
+function vCodeCard(p){
+  if (!TXT) return "";
+  const c = pageCode(p);
+  return `<div class="tipsec codec"><h4>Ayet sayısı ve kodlama</h4><p><b class="num big2">${c.n}</b> ayet · önerilen kodlama <b class="num">${c.groups.map(g => g.length).join(" + ")}</b></p>
+   ${c.groups.map((g, k) => { const i0 = g[0], i1 = g[g.length - 1], last = c.why[i1];
+     return `<div class="cgrp"><span class="cgn num">${k + 1}</span><div class="t"><b class="small">${esc(refStr(i0))}${i1 !== i0 ? "–" + ref(i1)[1] : ""} · ${g.length} ayet</b><span class="ar sm" dir="rtl" lang="ar">${esc(AR(i0).split(" ").slice(0, 3).join(" "))} …</span><span class="tiny">${esc(TRM(i0).slice(0, 90))}${TRM(i0).length > 90 ? "…" : ""}</span>${last ? `<span class="tiny gold">Sonu: ${last}</span>` : ""}</div></div>`; }).join("")}
+   <p class="tiny">Gruplar, Kur'an Yolu tefsirinin ayetleri birlikte açıkladığı mana bölümlerine, rükû (ع) sonlarına ve sure başlarına göre ayrıldı; 5'ten uzun bölümler 3–4'lük parçalara bölündü. Her grubun ilk kelimelerini ve konusunu bir kod gibi ezberle; vakf-ı lâzım ve "durmak evlâ" yerleri genellikle mana sınırıdır.</p></div>`;
+}
+
+/* ===== Ek çalışma takibi (isteğe bağlı) ===== */
+const EKT = [["mana", "Mana netleşti"], ["konu", "Konusu biliniyor"], ["tefsir", "Tefsiri okundu"], ["kod", "Kodlama yapıldı"], ["sira", "Ayet sırası ve sayısı"], ["gecis", "Sayfa başı, sonu, geçişler"], ["anlat", "Manayı kendim anlattım"], ["irab", "İ'rab (sarf–nahiv)"], ["tecvid", "Tecvid kuralları"], ["kiraat", "Kıraat farkları"]];
+const EKN = Object.fromEntries(EKT);
+const ekOn = () => !!S.settings.ek;
+function ekAdd(o){
+  const id = uid(), d = o.d || TODAY, f = Math.min(o.f, o.t || o.f), t = Math.max(o.f, o.t || o.f);
+  (S.ek = S.ek || []).unshift({ id, d, k: o.k, f, t, txt: o.txt || "", rec: o.rec || "" });
+  for (let p = f; p <= t; p++) { const pg = S.pages[p] || (S.pages[p] = {}); (pg.ek = pg.ek || {})[o.k] = d; }
+  if (d <= TODAY) markDay(d); mark("core", "pages"); return id;
+}
+function ekDel(id){ S.ek = (S.ek || []).filter(x => x.id !== id); mark("core"); }
+function ekOpen(k, f, t){ const [a, b] = f ? [f, t || f] : dlDefaultRange(); ui.ek = { k: k || "mana", f: a, t: b, txt: k === "kod" ? pageCode(a).txt : "" }; }
+function vEkForm(){
+  const E = ui.ek; if (!E) return "";
+  return `<div class="card ekform" id="ekform"><div class="row between"><h3>Ek çalışma</h3><button class="ghost small" data-act="ekclose">Kapat</button></div>
+   <div class="chips">${EKT.map(([k, l]) => `<button class="fchip ${E.k === k ? "on" : ""}" data-ekk="${k}">${l}</button>`).join("")}</div>
+   <div class="grid2"><label>Sayfadan<input type="number" id="ek-f" min="1" max="604" value="${E.f}" inputmode="numeric"></label><label>Sayfaya<input type="number" id="ek-t" min="1" max="604" value="${E.t}" inputmode="numeric"></label></div>
+   ${E.k === "kod" ? vCodeCard(E.f) : ""}
+   <label>${E.k === "kod" ? "Kodlaman" : E.k === "anlat" || E.k === "mana" ? "Kısaca mana" : E.k === "konu" ? "Konu" : "Not"} <span class="tiny">(isteğe bağlı)</span><textarea id="ek-txt" rows="3" placeholder="${E.k === "kod" ? "Örn. 3+4+2 · Kâfirler – münafıklar – misal" : E.k === "konu" ? "Örn. Münafıkların vasıfları" : "Kendi cümlelerinle yaz"}">${esc(E.txt)}</textarea></label>
+   <div class="row"><button class="primary" data-act="eksave">Kaydet</button><button data-act="eksesli">● Sesli anlat</button></div>
+   <p class="tiny">"Sesli anlat" bu sayfaların ses kaydını açar; kaydedince hem Ses kayıtları'na hem bu çalışmaya işlenir. Kendine ya da hocana dinletmek için oradan "Dinletme olarak işle" diyebilirsin.</p></div>`;
+}
+function vEkToday(d){
+  if (!ekOn()) return "";
+  const L = (S.ek || []).filter(x => x.d === (d || TODAY));
+  return `<div class="card ekbar"><div class="row between nowrap"><span><b>Ek çalışmalar</b> <span class="small muted">${L.length ? L.length + " kayıt" : "bugün yok"}</span></span><button class="small" data-ekopen="">+ Ekle</button></div>
+   ${L.length ? `<div class="chips">${L.map(x => `<span class="chip c-ok" title="${esc(x.txt)}">${esc(EKN[x.k])} · s. ${x.f}${x.t !== x.f ? "–" + x.t : ""}</span>`).join("")}</div>` : ""}</div>`;
+}
+function vEkPage(p){
+  const pg = S.pages[p] || {}, E = pg.ek || {}, L = (S.ek || []).filter(x => x.f <= p && x.t >= p), R = (RECS || []).filter(r => r.cid && r.cid.startsWith("ek:") && r.p <= p && (r.p2 || r.p) >= p);
+  return `<div class="card ekpage"><div class="row between"><h3>Sayfa ${p} · ek çalışma</h3><button class="ghost small" data-act="pgek">Kapat</button></div>
+   <div class="ekgrid">${EKT.map(([k, l]) => `<button class="ekc ${E[k] ? "on" : ""}" data-ekmark="${k}">${E[k] ? "✓" : "○"} ${l}${E[k] ? `<small>${trD(E[k])}</small>` : ""}</button>`).join("")}</div>
+   <p class="tiny">Dokununca bugün yapıldı olarak işaretlenir; yazı ya da sesli anlatım eklemek için "+ Ayrıntılı" de.</p>
+   ${vCodeCard(p)}
+   ${L.length ? `<h4>Notların</h4>${L.slice(0, 8).map(x => `<div class="small ekn"><span class="chip c-none">${esc(EKN[x.k])}</span> ${x.txt ? esc(x.txt) : ""} <span class="muted">${trD(x.d)}</span></div>`).join("")}` : ""}
+   ${R.length ? `<h4>Sesli anlatımların</h4>${R.map(r => `<div class="prec"><button class="playbtn" data-recplay="${r.id}">▶</button><div class="t"><b class="small">${esc(recTitle(r))}</b><span class="tiny">${trD(r.d)}</span></div></div>`).join("")}` : ""}
+   <div class="row"><button class="small" data-ekopen="${p}">+ Ayrıntılı</button></div></div>`;
+}
+function vEkAnaliz(){
+  if (!ekOn()) return "";
+  const cov = EKT.map(([k, l]) => { let n = 0; for (let p = 1; p <= 604; p++) if (S.pages[p] && S.pages[p].ek && S.pages[p].ek[k]) n++; return [k, l, n]; });
+  return `<div class="card"><div class="row between"><h3>Ek çalışmalar</h3><button class="ghost small" data-tab="ek">Ayrıntı</button></div>${cov.map(([k, l, n]) => `<div class="ekrow"><span class="small">${l}</span><div class="sbar sm"><i class="s-ok" style="width:${n / 604 * 100}%"></i></div><span class="tiny num">${n}</span></div>`).join("")}</div>`;
+}
+function vEk(){
+  return `<section><h2>Ek çalışmalar</h2>
+   <div class="card"><label class="inline"><input type="checkbox" id="set-ek" ${ekOn() ? "checked" : ""}> Ek çalışma takibini aç</label>
+    <p class="small muted">İsteğe bağlı: manası netleşti mi, konusu, tefsiri, kodlaması, ayet sırası ve sayısı, sayfa geçişleri, i'rabı, tecvidi, kıraati. Açınca Bugün'de, Takvim'de, Mushaf sayfasında ve Analiz'de görünür.</p></div>
+   ${ekOn() ? `${ui.ek ? vEkForm() : `<button class="primary wide" data-ekopen="">+ Ek çalışma ekle</button>`}${vEkAnaliz()}
+   <div class="card"><h3>Son kayıtlar</h3>${(S.ek || []).slice(0, 30).map(x => `<div class="item"><div class="t"><b class="small">${esc(EKN[x.k])} · s. ${x.f}${x.t !== x.f ? "–" + x.t : ""}</b>${x.txt ? `<div class="small">${esc(x.txt)}</div>` : ""}<div class="tiny muted">${trDY(x.d)}</div></div><button class="ghost small" data-ekdel="${x.id}" aria-label="Sil">×</button></div>`).join("") || `<p class="small muted">Henüz kayıt yok.</p>`}</div>` : ""}</section>`;
+}
+
+/* ===== Rehber: vakıf işaretleri (Medine ve Türkiye baskıları) ve Kur'an ilimleri ===== */
+const VAKIF2 = [
+  ["ۘ", "م", "Vakf-ı lâzım", "Durmak gerekir; geçilirse mana bozulabilir. İki baskıda da aynı."],
+  ["ۗ", "ط", "Medine: vakf evlâ (قلى) · Türkiye: vakf-ı mutlak (ط)", "Durmak daha iyidir; cümle burada tamamlanır. Kodlamada iyi bir sınırdır."],
+  ["ۚ", "ج", "Vakf-ı câiz", "Durmak da geçmek de olur."],
+  ["ۖ", "ز", "Medine: vasl evlâ (صلى) · Türkiye: vakf-ı mücevvez (ز)", "Geçmek daha iyidir; durulursa da olur."],
+  ["ۙ", "لا", "Lâ", "Durulmaz; durulduysa geri dönülüp bağlanarak okunur."],
+  ["ۛ", "∴", "Muânaka", "Art arda iki işaretten birinde durulur, ikisinde birden değil."],
+  ["ۜ", "س", "Sekte", "Nefes almadan kısa bir duruş (Hafs'ta 4 yerde)."],
+  ["—", "ص", "Vakf-ı murahhas (yalnız Türkiye baskıları)", "Asıl olan geçmektir; nefes yetmezse durmaya ruhsat vardır."],
+  ["—", "ع", "Rükû / vakf-ı ayn (Türkiye ve Hint-Pakistan baskıları)", "Bir mana bütünlüğünün sonu; namazda burada rükûa varılabilir. Medine baskısında yoktur. Uygulamada Osmanlı görünümünde 442 yerde (sure sonları hariç) gösterilir."],
+  ["—", "ك", "Kezâlik (Türkiye baskıları)", "Bir önceki işaretin hükmü burada da geçerlidir."]
+];
+const ULUM2 = [
+  ["Vahiy ve nüzûl", "İlk vahiy Alak suresinin ilk 5 ayetidir (Hira, 610). Kur'an yaklaşık 23 yılda (Mekke'de ~13, Medine'de ~10 yıl) parça parça (münecceman) indi; Furkân 32 bunun hikmetini kalpleri sağlamlaştırmak olarak bildirir. Son inen ayet konusunda en yaygın görüş Bakara 281'dir.", "", "Hafızlık faydası: Ayetleri iniş bağlamıyla bilmek (Rehber > Nüzûl) manayı ve sırayı kalıcı kılar."],
+  ["Cem ve istinsah", "Hz. Ebû Bekir döneminde, Yemâme savaşında çok sayıda hafızın şehit düşmesi üzerine Zeyd b. Sâbit başkanlığında Kur'an tek nüshada toplandı (suhuf). Hz. Osman döneminde bu nüsha esas alınarak çoğaltıldı ve İslam şehirlerine gönderildi; okumada Kureyş lehçesi esas alındı.", "", ""],
+  ["Resm-i Osmânî (mushaf imlası)", "Hz. Osman mushaflarının yazım kuralları: bazı harflerin düşürülmesi (hazf), eklenmesi (ziyade), başka harfle yazılması (bedel), kelimelerin bitişik ya da ayrı yazılması (vasl–fasl). Nokta ve harekeler sonradan eklendi (Ebü'l-Esved ed-Düelî, Halil b. Ahmed). Medine ve Türkiye baskıları bu imlayı izler; ayrılan yerler hat üslubu ve işaretlerdir.", "صَلَوٰة · زَكَوٰة · أُوْلَٰٓئِكَ", "Hafızlık faydası: \"Yazıldığı gibi okunmayan\" kelimeleri ayrı bir listede çalış."],
+  ["Ayet sayısı ve sayım ekolleri", "Hafs mushaflarının izlediği Kûfe sayımına göre 6236 ayet vardır. Medine, Mekke, Basra ve Şam sayımları 6204–6236 arasında değişir; fark metinde değil, bazı ayetlerin nerede bölündüğündedir.", "", "Kodlamada sayfanın ayet sayısını bilmek (Mushaf > sayfa > Ek çalışma) sayfa sonunu kaçırmamaya yardım eder."],
+  ["Sure ve ayet tertibi", "Ayetlerin sure içindeki sırası tevkîfîdir (Peygamberimizin bildirmesiyle); sure sırasının da büyük ölçüde tevkîfî olduğu kabul edilir. 114 sure vardır; en uzunu Bakara (286 ayet), en kısası Kevser (3 ayet).", "", ""],
+  ["Mekkî ve Medenî", "Esas ölçü hicrettir: hicretten önce inenler Mekkî, sonra inenler Medenî sayılır. Mekkî sureler çoğunlukla kısa ayetli; iman, ahiret ve kıssa ağırlıklıdır. Medenî sureler uzun ayetli; hüküm, aile ve toplum düzeni ağırlıklıdır.", "", "\"Yâ eyyühennâs\" hitabı çoğunlukla Mekkî, \"yâ eyyühellezîne âmenû\" hitabı Medenî surelerde."],
+  ["Esbâb-ı nüzûl", "Bir ayetin inmesine vesile olan olay ya da soru. Başlıca kaynaklar el-Vâhidî'nin Esbâbü'n-nüzûl'ü ve Suyûtî'nin Lübâbü'n-nukûl'üdür. Usulcüler, \"sebebin özel olması hükmün genel olmasına engel değildir\" kaidesini kabul eder.", "", "Uygulamada ayete dokun > Nüzûl sekmesi."],
+  ["Nesh", "Bir şer'î hükmün sonra gelen bir hükümle kaldırılması. Erken dönem âlimler kavramı geniş (tahsis ve takyidi de katarak), sonrakiler dar tutmuştur; nesh edilen ayet sayısı hakkında görüşler çok farklıdır.", "", ""],
+  ["Muhkem ve müteşâbih", "Âl-i İmrân 7'ye göre muhkem ayetler manası açık olanlar, müteşâbih ayetler birden çok manaya ihtimali olanlardır. Hafızlıktaki \"müteşabih ayetler\" ise bundan farklıdır: lafzı birbirine çok benzeyen ayetlerdir (elfâz-ı müteşâbihe).", "", "Lafzî benzerliklerin sebebini Dürretü't-tenzîl ve Melâkü't-te'vîl açıklar (Müteşabih > Neden farklı?)."],
+  ["Kıraatler", "Mütevâtir on kıraat vardır; her kıraatin iki meşhur râvisi bulunur. Türkiye ve İslam dünyasının büyük kısmında Âsım kıraatinin Hafs rivayeti okunur; Kuzey Afrika'da Verş ve Kâlûn yaygındır.", "", "Uygulamada ayete dokun > Kıraat sekmesi."],
+  ["Vakf ve ibtidâ", "Nerede durulup nereden başlanacağını inceleyen ilim. Duraklar mana bakımından tâm (her yönden tamam), kâfî (lafzen tamam, manen bağlı), hasen (güzel ama sonrasıyla bağlı) ve kabîh (manayı bozan) diye ayrılır. Secâvendî'nin işaretleri Türkiye baskılarına, Medine heyetinin işaretleri Medine baskılarına esas olmuştur.", "", "Tâm ve kâfî duraklar ayet kodlamasında doğal sınırdır."],
+  ["Rükû (ayn)", "Türkiye ve Hint-Pakistan baskılarında kenarda ya da ayet sonunda bulunan ع işareti, bir mana bütünlüğünün bittiği yeri gösterir; namazda bir rekâtta okunacak miktar için ölçü olmuştur. Kur'an yaklaşık 556–558 rükûya ayrılır. Medine baskısında bu işaret yoktur.", "", "Osmanlı görünümünü seçince rükû sonları ع ile gösterilir (Tanzil verisi)."],
+  ["Hurûf-ı mukattaa", "29 surenin başındaki kesik harfler 14 farklı harften oluşur; 6 hareke uzatılan harfler med-i lâzımdır.", "نَصٌّ حَكِيمٌ قَاطِعٌ لَهُ سِرٌّ", "Bu cümle 14 mukattaa harfinin hepsini içerir."],
+  ["Secde ayetleri", "Hafs mushafında 15 yerde secde işareti (۩) vardır; Hanefîlere göre 14'ünde tilâvet secdesi vâciptir.", "", "Rehber > Secdeler'de hepsi listeli."],
+  ["Cüz, hizb, rub ve menzil", "Mushaf 30 cüz, 60 hizb ve 240 rub'a ayrılır; ۞ işareti rub başlarını gösterir. Haftalık hatim için 7 menzil kullanılır.", "", "1 cüz = 2 hizb = 8 rub ≈ 20 sayfa."],
+  ["Besmele", "Tevbe dışındaki her sure besmeleyle başlar; Neml 30'da ayet içinde de geçer. Toplam 114 besmele.", "", ""],
+  ["İ'câz", "Kur'an'ın benzerinin getirilememesi. Meydan okuma ayetleri (Bakara 23, Yûnus 38, Hûd 13, İsrâ 88) ve dil, üslup, haber ve hüküm yönlerinden mucizeliği üzerine eserler yazılmıştır.", "", ""],
+  ["Tefsir", "Rivayet tefsiri ayet, hadis ve sahabe sözlerine; dirayet tefsiri dil ve akıl yürütmeye dayanır. Türkçede Elmalılı Hamdi Yazır'ın Hak Dini Kur'an Dili ve Diyanet'in Kur'an Yolu tefsiri en yaygın olanlardır.", "", "Uygulamada ayete dokun > Tefsir sekmesi: Kur'an Yolu ve Tefhîm."],
+  ["Medine mushafı düzeni", "604 sayfa, sayfa başına 15 satır; her sayfa ayet sonuyla biter. Bu düzen sayfa kodlamayı kolaylaştırır.", "", ""],
+  ["Hıfzı korumak", "Peygamberimiz Kur'an'ı ezberleyenlere onu sürekli tekrar etmelerini, çünkü bağından boşanan deveden daha hızlı kaçtığını bildirmiştir (Buhârî, Fezâilü'l-Kur'ân 23; Müslim, Salâtü'l-müsâfirîn 231).", "", "Uygulamadaki unutma riski ve aralıklı tekrar bu tavsiyenin pratik karşılığıdır."]
+];
+function vUlumRehber2(){
+  return `<div class="card"><h3>Vakıf işaretleri</h3><p class="small muted">Medine baskısının işaretleri ve Türkiye baskılarındaki karşılıkları. Yerleri baskıdan baskıya biraz değişebilir; uygulamanın Osmanlı görünümü Medine işaretlerini Türkiye karşılıklarıyla gösterir ve rükû (ع) ekler, birebir Türkiye baskısı değildir.</p>
+   <div class="tablewrap"><table><thead><tr><th>Medine</th><th>Türkiye</th><th>Anlamı</th></tr></thead><tbody>${VAKIF2.map(([m, t, n, d]) => `<tr><td class="ar vk" lang="ar">${m}</td><td class="ar vk" lang="ar">${t}</td><td><b>${n}</b><br><span class="small muted">${d}</span></td></tr>`).join("")}</tbody></table></div></div>
+   <div class="card"><h3>Kur'an ilimleri</h3>${ULUM2.map(([n, d, ex, mn]) => `<details><summary>${n}</summary><p>${esc(d)}</p>${ex ? `<p class="ar tfs" dir="rtl" lang="ar">${esc(ex)}</p>` : ""}${mn ? `<p class="small gold">${esc(mn)}</p>` : ""}</details>`).join("")}
+   <p class="tiny">Kaynaklar: Diyanet İslâm Ansiklopedisi ("Vakf ve İbtidâ", "Mushaf", "Kıraat", "Nesih", "Esbâb-ı Nüzûl" maddeleri); Suyûtî, el-İtkân; Zerkeşî, el-Burhân.</p></div>`;
+}
+
+/* ===== Ham / has: sayfa kaç kez dinletildi ===== */
+let _dlcK = "", _dlc = null;
+function dlCounts(){
+  const k = (S.dinlet || []).length + ":" + (S.dinlet && S.dinlet[0] ? S.dinlet[0].id : ""); if (_dlc && _dlcK === k) return _dlc;
+  const m = {}; (S.dinlet || []).forEach(s => { for (let p = s.f; p <= s.t; p++) m[p] = (m[p] || 0) + 1; });
+  for (let p = 1; p <= 604; p++) if (!m[p] && S.pages[p] && S.pages[p].dl) m[p] = 1;
+  _dlc = m; _dlcK = k; return m;
+}
+function hamHasOf(pages){ const C = dlCounts(), ham = [], has = []; pages.forEach(p => { const n = C[p] || 0; if (n === 1) ham.push(p); else if (n >= 2) has.push(p); }); return { ham, has }; }
+function hamHasLine(j){ const [a, b] = juzPages(j), L = []; for (let p = a; p <= b; p++) L.push(p); const h = hamHasOf(L);
+  if (!h.ham.length && !h.has.length) return ""; return `<p class="small">${h.has.length ? `<b class="good-t">Has</b> (2+ kez dinletildi): s. ${jRanges(h.has)}` : ""}${h.has.length && h.ham.length ? " · " : ""}${h.ham.length ? `<b class="gold">Ham</b> (ilk kez dinletildi): s. ${jRanges(h.ham)}` : ""}</p>`; }
+function vHamHas(){
+  const C = dlCounts(); let ham = 0, has = 0, has3 = 0; for (let p = 1; p <= 604; p++) { const n = C[p] || 0; if (n === 1) ham++; else if (n >= 2) { has++; if (n >= 3) has3++; } }
+  if (!ham && !has) return "";
+  const rows = Array.from({ length: 30 }, (_, k) => { const [a, b] = juzPages(k + 1), n = b - a + 1; let h1 = 0, h2 = 0; for (let p = a; p <= b; p++) { const c = C[p] || 0; if (c === 1) h1++; else if (c >= 2) h2++; } return h1 || h2 ? `<div class="jb"><span class="tiny num">${k + 1}</span><div class="sbar sm"><i class="s-ok" style="width:${h2 / n * 100}%"></i><i class="s-ham" style="width:${h1 / n * 100}%"></i></div></div>` : ""; }).join("");
+  return `<div class="hamhas"><div class="stats"><div class="stat"><b class="num">${ham}</b><span>ham sayfa (1 kez)</span></div><div class="stat c-ok"><b class="num">${has}</b><span>has sayfa (2+ kez)</span></div><div class="stat"><b class="num">${has3}</b><span>3+ kez</span></div></div>
+   <div class="jbars">${rows}</div><p class="tiny">Yeşil: has (en az iki kez dinletildi) · Altın: ham (ilk kez dinletildi). Bir sayfa ikinci kez dinletilince has olur.</p></div>`;
+}
+
+/* ===== Sayfa karnesi: okuma, dinletme, namaz, süre ===== */
+let _pstK = "", _pst = null;
+function pageStats(){
+  const k = Object.keys(S.days).length + ":" + Object.values(S.days).reduce((n, x) => n + Object.keys(x.done || {}).length + (x.read || []).length * 7 + (x.namaz || []).length * 13 + (x.min || 0), 0);
+  if (_pst && _pstK === k) return _pst;
+  const m = {};
+  for (const d in S.days) { const x = S.days[d], set = new Set(x.read || []);
+    partsFor(d).parts.forEach(p => { if (x.done && x.done[partKey(p)]) partPageList(p).forEach(q => set.add(q)); });
+    const per = set.size && x.min ? x.min / set.size : 0;
+    set.forEach(q => { const o = m[q] || (m[q] = { n: 0, min: 0, last: "", nm: 0 }); o.n++; o.min += per; if (d > o.last) o.last = d; });
+    (x.namaz || []).forEach(q => { const o = m[q] || (m[q] = { n: 0, min: 0, last: "", nm: 0 }); o.nm++; }); }
+  _pst = m; _pstK = k; return m;
+}
+function pageCard(p){
+  const o = pageStats()[p] || { n: 0, min: 0, last: "", nm: 0 }, dl = dlCounts()[p] || 0, open = S.err.filter(e => e.p === p && !e.fix).length, pg = S.pages[p] || {};
+  const bits = [`<b>${o.n}</b> okuma`, `<b>${dl}</b> dinletme${dl >= 2 ? " (has)" : dl === 1 ? " (ham)" : ""}`];
+  if (o.nm) bits.push(`<b>${o.nm}</b> namazda`);
+  if (o.min && o.n) bits.push(`~${Math.max(1, Math.round(o.min / o.n))} dk/okuma`);
+  bits.push(o.last ? (o.last === TODAY ? "bugün okundu" : diffD(o.last, TODAY) + " gün önce") : "okuma kaydı yok");
+  if (open) bits.push(`<span class="danger">${open} açık hata</span>`);
+  return `<div class="pcard small"><span class="chip c-${pg.st || "none"}">${PST[pg.st || ""]}${fadeOf(p) ? " · soluk" : ""}</span> ${bits.join(" · ")}</div>`;
+}
+const fadeOf = p => pst(p) === "ok" && pageRisk(p).r >= .8;
+
+/* ===== Namazda okuma ===== */
+function addNamaz(f, t, d){ d = d || TODAY; const x = dayRec(d), L = []; for (let p = Math.min(f, t); p <= Math.max(f, t); p++) L.push(p); x.namaz = (x.namaz || []).concat(L); x.read = x.read || []; L.forEach(p => { if (!x.read.includes(p)) x.read.push(p); }); markDay(d); return L.length; }
+
+/* ===== Turlar (dönüşler) ===== */
+function roundsList(){
+  const out = [];
+  (S.planHist || []).forEach(h => { if (h.start && h.end) out.push({ ad: "Önceki program · " + (h.name || (h.stages ? stageName(h.stages[0]) : "")), from: h.start, to: h.end, done: true }); });
+  if (sepetOn()) {
+    const M = (S.turlar || []).slice().sort((a, b) => a.d.localeCompare(b.d));
+    M.forEach((t, k) => out.push({ ad: t.ad || (k + 1) + ". tur", from: t.d, to: M[k + 1] ? addDays(M[k + 1].d, -1) : TODAY, done: !!M[k + 1], cur: !M[k + 1] }));
+    if (!M.length && S.modeFrom) out.push({ ad: "Programsız dönem", from: S.modeFrom, to: TODAY, cur: true });
+  } else if (S.plan && S.plan.stages) {
+    const cur = S.plan, lens = curPlan().lens, ci = diffD(cur.start, TODAY) + (+cur.offset || 0), dOf = i => addDays(cur.start, i - (+cur.offset || 0));
+    let s0 = 0;
+    cur.stages.forEach((st, k) => { const len = lens[k], b = buildPlan(st.type, st.p), cyc = b.cycle || b.steps || len || 30, end = len == null ? Infinity : s0 + len;
+      for (let r = 0; s0 + r * cyc < end && s0 + r * cyc <= ci; r++) { const a = s0 + r * cyc, z = Math.min(end, a + cyc) - 1;
+        out.push({ ad: (cur.stages.length > 1 ? (k + 1) + ". aşama · " : "") + (r + 1) + ". tur · " + stageName(st), from: dOf(a), to: dOf(Math.min(z, ci)), plan: dOf(z), done: z < ci, cur: a <= ci && ci <= z, len: z - a + 1, day: ci - a + 1 }); }
+      if (len != null) s0 += len; });
+  }
+  return out;
+}
+function roundStats(from, to){
+  let days = 0, full = 0, min = 0; const read = new Set(); let reads = 0;
+  for (let d = from; d <= to; d = addDays(d, 1)) { days++; const x = S.days[d]; if (!x) continue; if (dayStatus(d) === "full") full++; min += x.min || 0; const n = readPages(d); reads += n; (x.read || []).forEach(p => read.add(p)); partsFor(d).parts.forEach(p => { if (x.done && x.done[partKey(p)]) partPageList(p).forEach(q => read.add(q)); }); }
+  const ses = (S.dinlet || []).filter(s => s.d >= from && s.d <= to), ok = new Set(), bad = new Set();
+  ses.forEach(s => { const ep = new Set(S.err.filter(e => s.errs.includes(e.id)).map(e => e.p)); for (let p = s.f; p <= s.t; p++) (ep.has(p) ? bad : ok).add(p); });
+  bad.forEach(p => ok.delete(p));
+  const errs = S.err.filter(e => e.d >= from && e.d <= to).length, fixed = S.err.filter(e => e.fix && e.fix >= from && e.fix <= to).length;
+  return { days, full, min, read: read.size, reads, ses: ses.length, ok: ok.size, bad: bad.size, errs, fixed };
+}
+function vRounds(n){
+  const L = roundsList().reverse().slice(0, n || 12); if (!L.length) return "";
+  return `<div class="card"><div class="row between"><h3>Turlar</h3>${sepetOn() ? `<button class="ghost small" data-act="turnew">Yeni tur başlat</button>` : ""}</div>
+   ${L.map(r => { const s = roundStats(r.from, r.to > TODAY ? TODAY : r.to);
+     return `<details class="tur ${r.cur ? "cur" : ""}" ${r.cur ? "open" : ""}><summary><b>${esc(r.ad)}</b> <span class="small muted">${trD(r.from)} – ${trD(r.cur && r.plan ? r.plan : r.to)}</span> ${r.cur ? `<span class="chip c-ok">Sürüyor${r.len ? " · " + r.day + "/" + r.len : ""}</span>` : `<span class="chip c-none">Bitti</span>`}</summary>
+      ${r.cur && r.len ? `<div class="bar"><i style="width:${Math.min(100, r.day / r.len * 100)}%"></i></div>` : ""}
+      <div class="tstats"><span><b>${s.full}</b>/${s.days} gün tam</span><span><b>${s.read}</b> farklı sayfa (${s.reads} okuma)</span><span><b>${fmtMin(s.min)}</b></span><span><b>${s.ses}</b> dinletme</span><span class="good-t"><b>${s.ok}</b> s. hatasız</span><span class="danger"><b>${s.bad}</b> s. hatalı</span><span><b>${s.errs}</b> hata${s.fixed ? ` · <span class="good-t">${s.fixed} düzeldi</span>` : ""}</span></div></details>`; }).join("")}
+   <p class="tiny">Turlar bitince hiçbir şey sıfırlanmaz: sayfaların durumu ve geçmişi kalır. Uzun süre okunmayan sağlam sayfalar sepette soluk görünür.</p></div>`;
+}
+function curRoundStart(){ const L = roundsList().filter(r => r.cur); return L.length ? L[L.length - 1].from : addDays(TODAY, -30); }
+function roundPages(){ const from = curRoundStart(), read = new Set(), dl = {}; for (let d = from; d <= TODAY; d = addDays(d, 1)) { const x = S.days[d]; if (!x) continue; (x.read || []).forEach(p => read.add(p)); partsFor(d).parts.forEach(p => { if (x.done && x.done[partKey(p)]) partPageList(p).forEach(q => read.add(q)); }); }
+  (S.dinlet || []).filter(s => s.d >= from).forEach(s => { for (let p = s.f; p <= s.t; p++) dl[p] = 1; }); return { from, read, dl }; }
 
 /* ===== Kişisel ezber analizi ===== */
 function vAnaliz(){
@@ -3006,7 +3242,7 @@ function vSina(){
 }
 
 /* ---------- Takip ---------- */
-function pageReads(){ const out = {}; for (const d in S.days) { const x = S.days[d]; partsFor(d).parts.forEach(p => { if (x.done[partKey(p)]) partPageList(p).forEach(q => out[q] = (out[q] || 0) + 1); }); } return out; }
+function pageReads(){ const out = {}, st = pageStats(); for (const p in st) out[p] = st[p].n; return out; }
 function vTakip(){
   const head = `<section><h2>Takip</h2>${seg("tSeg", [["cuz", "Cüzler"], ["sayfa", "Sayfalar"], ["hata", "Hatalar"], ["analiz", "Analiz"], ["hafta", "Hafta"]], ui.tSeg)}`;
   if (ui.tSeg === "analiz") return head + vAnaliz() + `</section>`;
@@ -3016,7 +3252,7 @@ function vTakip(){
   const cnt = { ok: 0, warn: 0, bad: 0, none: 0, part: 0 }; for (let j = 1; j <= 30; j++) cnt[juzCov(j).color]++;
   const sel = ui.juzSel; let det = "";
   if (sel) { const logs = ((S.juz[sel] || {}).logs || []).slice().sort((a, b) => a.d < b.d ? 1 : -1), [a, b] = juzPages(sel);
-    det = `<div class="card" id="jdet"><div class="row between"><h2>${sel}. cüz</h2><span class="chip c-${juzCov(sel).color}">${CN2[juzCov(sel).color]}</span></div><div class="small muted">Sayfa ${a}–${b} · ${esc(refStr(JZ[sel - 1]))} ile başlar · ${mutCountJuz[sel]} müteşabih</div><div class="jcov">${juzCov(sel).bar}<p class="small">${juzCov(sel).desc}</p></div>
+    det = `<div class="card" id="jdet"><div class="row between"><h2>${sel}. cüz</h2><span class="chip c-${juzCov(sel).color}">${CN2[juzCov(sel).color]}</span></div><div class="small muted">Sayfa ${a}–${b} · ${esc(refStr(JZ[sel - 1]))} ile başlar · ${mutCountJuz[sel]} müteşabih</div><div class="jcov">${juzCov(sel).bar}<p class="small">${juzCov(sel).desc}</p>${hamHasLine(sel)}</div>
      <form id="logform" class="col"><h3>Dinletme kaydı</h3><p class="small">Sayfa sayfa ve hata hata girmek için <button type="button" class="ghost small" data-dlopen="${juzPages(+ui.juzSel)[0]}-${juzPages(+ui.juzSel)[1]}">Ayrıntılı dinletme kaydı</button>. Aşağıdaki kısa form sadece sayı tutar; hatasız girersen cüzün sayfaları sağlam sayılır.</p><div class="grid2"><label>Tarih<input type="date" id="lg-d" value="${TODAY}"></label><label>Kime / nasıl<input id="lg-w" placeholder="Hoca, arkadaş, ses kaydı"></label>
      <label>Hata<input type="number" id="lg-h" min="0" value="0" inputmode="numeric"></label><label>Takılma / dürtülme<input type="number" id="lg-t" min="0" value="0" inputmode="numeric"></label>
      <label>Süre (dk)<input type="number" id="lg-m" min="0" inputmode="numeric" placeholder="35"></label><label>Zayıf sayfalar<input id="lg-p" placeholder="${a + 3}, ${a + 9}"></label></div>
@@ -3131,7 +3367,7 @@ function vPlan(){
      ${chainHtml(cur.stages, curStage)}<span class="small">${esc(today.info || "")}</span>
      <div class="row"><span class="small">Kaydır:</span><button class="onacc" data-act="off-1" aria-label="Bir gün geri">−1 gün</button><span class="num">${cur.offset || 0}</span><button class="onacc" data-act="off+1" aria-label="Bir gün ileri">+1 gün</button><span class="small">Kaçırdığın günü ertesine yığma, planı 1 gün geri al.</span></div></div>
    <div class="card"><h3>Onarım eklentisi</h3><p class="small muted">Her güne zayıf işaretli sayfaları ya da en zayıf cüzü ekler.</p>${seg("onarim", [["sayfa", "Zayıf sayfalar"], ["risk", "Unutma riski"], ["cuz", "En zayıf cüz"], ["yok", "Ekleme"]], S.settings.onarim)}</div>
-   ${sepetOn() ? `<div class="card warnc"><b>Şu an programsız kullanıyorsun.</b><p class="small">Bugün ve Takvim'de program görünmüyor; Ezber sepeti önerileriyle serbest tekrar yapıyorsun. Aşağıdan bir program seçip başlatınca programlıya geçersin.</p></div>` : `<div class="card"><p class="small">Program istemiyor musun? <button class="ghost small" data-seg="mode" data-v="sepet">Programsız kullan</button> Bugün ve Takvim'de sadece serbest tekrar ve sepet önerileri görünür.</p></div>`}
+   ${vRounds(6)}${sepetOn() ? `<div class="card warnc"><b>Şu an programsız kullanıyorsun.</b><p class="small">Bugün ve Takvim'de program görünmüyor; Ezber sepeti önerileriyle serbest tekrar yapıyorsun. Aşağıdan bir program seçip başlatınca programlıya geçersin.</p></div>` : `<div class="card"><p class="small">Program istemiyor musun? <button class="ghost small" data-seg="mode" data-v="sepet">Programsız kullan</button> Bugün ve Takvim'de sadece serbest tekrar ve sepet önerileri görünür.</p></div>`}
    ${seg("plSeg", [["hazir", "Hazır programlar"], ["kur", "Kendin kur"], ["yontem", "Yöntemler"]], ui.plSeg || "hazir")}`;
   const sg = ui.plSeg || "hazir";
   if (sg === "yontem") return head + `${Object.values(PLAN_DEFS).map(d => `<div class="card"><div class="row between"><b>${esc(d.ad)}</b><span class="small gold">${esc(d.etiket)}</span></div><p class="small">${esc(d.kisa)}</p><p class="small muted">Kimin için: ${esc(d.uygun)}</p></div>`).join("")}
@@ -3178,7 +3414,7 @@ function vRehber(){
     b = `<div class="card"><div class="grid2"><label>Ara<input id="rq" value="${esc(ui.rQ)}" placeholder="Sure adı ya da no"></label><label>İniş yeri<select id="rmd">${[["", "Hepsi"], ["M", "Mekkî"], ["D", "Medenî"]].map(o => opt(o[0], o[1], ui.rMD)).join("")}</select></label></div>
     <div class="tablewrap"><table><thead><tr><th>No</th><th>Sure</th><th>Ayet</th><th>İniş</th><th>Sayfa</th><th>Cüz</th><th>Müt.</th></tr></thead><tbody>${L.map(s => { const [a, z] = surahPages(s); return `<tr class="click" data-goayah="${SST[s - 1]}"><td class="num">${s}</td><td><b>${esc(SN(s))}</b> <span class="ar sm2">${esc(SUR[s - 1][1])}</span></td><td class="num">${SUR[s - 1][2]}</td><td>${SUR[s - 1][3] === "M" ? "Mekkî" : "Medenî"}</td><td class="num">${a}${z > a ? "–" + z : ""}</td><td class="num">${juzOf(SST[s - 1])}${juzOf(SST[s - 1] + SUR[s - 1][2] - 1) !== juzOf(SST[s - 1]) ? "–" + juzOf(SST[s - 1] + SUR[s - 1][2] - 1) : ""}</td><td class="num">${mutCountSur[s] || ""}</td></tr>`; }).join("")}</tbody></table></div></div>`; }
   if (ui.rSeg === "tecvid") b = vTecvidRehber();
-  if (ui.rSeg === "ulum") b = vUlumRehber();
+  if (ui.rSeg === "ulum") b = vUlumRehber2();
   if (ui.rSeg === "kiraat") b = vKiraatRehber();
   if (ui.rSeg === "sarf") b = vSarfRehber();
   if (ui.rSeg === "usul") b = USUL.map(([h, items]) => `<div class="card"><h3>${h}</h3>${items.map(([t, d]) => `<details><summary>${t}</summary><p>${d}</p></details>`).join("")}</div>`).join("") + `<div class="card"><h3>Veri kaynakları</h3><p class="small">Arapça metin (Hafs, Osmanî hat), Diyanet İşleri meali ve sayfa/cüz/hizb eşlemesi: <a href="https://github.com/fawazahmed0/quran-api" target="_blank" rel="noopener">fawazahmed0/quran-api</a>. Müteşabih eşleşmeleri: <a href="https://github.com/Waqar144/Quran_Mutashabihat_Data" target="_blank" rel="noopener">Quran Mutashabihat Data</a> (CC0, Kari İdris el-Âsım'ın çalışmasına dayanır). Sayfa numaraları 604 sayfalık Medine/hafızlık mushafı düzenine göredir.</p></div>`;
@@ -3194,7 +3430,7 @@ const USUL = [
 
 /* ---------- Menü + Ayarlar ---------- */
 function vMenu(){
-  const it = [["sina", "Kendini sına", "Sayfa başı, sonraki ayet, hangi sayfa, hangi sure"], ["takip", "Takip", "Cüz renkleri, sayfa haritası, hata defteri, haftalık değerlendirme"], ["ist", "İstatistik", "Süre, sayfa ve başarı grafikleri"], ["plan", "Plan ve yöntemler", "Hatim, kademeli, sure sure, hizb, yakın–uzak, menzil"], ["dinle", "Ses kayıtları", "Kendi okuyuşların ve başka hafızların kayıtları; sayfa sayfa dinle, hatayı işaretle"], ["hoca", "Hoca ve arkadaş", "Durumunu paylaş, hocandan dinletme kaydı al"], ["mukabele", "Mukabele / Ramazan", "Okuyucular arasında günlük cüz paylaşımı"], ["sepet", "Ezber sepeti", "Programsız takip: sağlam sayfaları işaretle, kalanı gör, günlük öneri al"], ["hatir", "Hatırlatmalar", "Günün tekrarını iPhone Takvimi'ne ekle, bildirim gelsin"], ["gen", "Hazır içerik", "Claude içeriklerini bir kere hazırla; internetsiz ve Claude'suz sürümde de kullan"], ["konu", "Konu fihristi", "14 ana başlık, 17 bin alt konu: ayetleri konusuna göre bul"], ["rapor", "Hafızlık raporu", "Hocana verilecek özet: cüzler, dinletmeler, zayıf sayfalar"], ["rehber", "Rehber", "Cüz, sayfa, hizb başları, sureler, tecvid, kıraatler, Kur'an ilimleri"], ["ayar", "Ayarlar ve yedek", "Yazı boyutu, meal, süre tahmini, yedekleme"]];
+  const it = [["sina", "Kendini sına", "Sayfa başı, sonraki ayet, hangi sayfa, hangi sure"], ["takip", "Takip", "Cüz renkleri, sayfa haritası, hata defteri, haftalık değerlendirme"], ["ist", "İstatistik", "Süre, sayfa ve başarı grafikleri"], ["plan", "Plan ve yöntemler", "Hatim, kademeli, sure sure, hizb, yakın–uzak, menzil"], ["dinle", "Ses kayıtları", "Kendi okuyuşların ve başka hafızların kayıtları; sayfa sayfa dinle, hatayı işaretle"], ["hoca", "Hoca ve arkadaş", "Durumunu paylaş, hocandan dinletme kaydı al"], ["mukabele", "Mukabele / Ramazan", "Okuyucular arasında günlük cüz paylaşımı"], ["ek", "Ek çalışmalar", "Mana, konu, tefsir, kodlama, ayet sırası, i'rab, tecvid takibi (isteğe bağlı)"], ["sepet", "Ezber sepeti", "Programsız takip: sağlam sayfaları işaretle, kalanı gör, günlük öneri al"], ["hatir", "Hatırlatmalar", "Günün tekrarını iPhone Takvimi'ne ekle, bildirim gelsin"], ["gen", "Hazır içerik", "Claude içeriklerini bir kere hazırla; internetsiz ve Claude'suz sürümde de kullan"], ["konu", "Konu fihristi", "14 ana başlık, 17 bin alt konu: ayetleri konusuna göre bul"], ["rapor", "Hafızlık raporu", "Hocana verilecek özet: cüzler, dinletmeler, zayıf sayfalar"], ["rehber", "Rehber", "Cüz, sayfa, hizb başları, sureler, tecvid, kıraatler, Kur'an ilimleri"], ["ayar", "Ayarlar ve yedek", "Yazı boyutu, meal, süre tahmini, yedekleme"]];
   return `<section><h2>Menü</h2><div class="methods">${it.map(([k, t, d]) => `<button class="method" data-tab="${k}"><b>${t}</b><span class="small muted">${d}</span></button>`).join("")}</div></section>`;
 }
 function vAyar(){
@@ -3212,7 +3448,7 @@ function vAyar(){
 
 /* ---------- çizim ---------- */
 const NAV = [["bugun", "Bugün", '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'], ["takvim", "Takvim", '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'], ["mushaf", "Mushaf", '<path d="M4 5c3-1 5-1 8 1v14c-3-2-5-2-8-1zM20 5c-3-1-5-1-8 1v14c3-2 5-2 8-1z"/>'], ["analiz", "Analiz", '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'], ["mut", "Müteşabih", '<path d="M4 7h7M4 12h7M4 17h7M14 7h6M14 12h6M14 17h6"/>'], ["menu", "Menü", '<circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>']];
-const VIEWS = { analiz: vGenel, sepet: vSepet, hatir: () => `<section><h2>Hatırlatmalar</h2>${vRemind()}<div class="card"><h3>Telefon</h3><label class="inline"><input type="checkbox" id="set-wake" ${S.settings.wake !== false ? "checked" : ""}> Mushaf açıkken ekran kapanmasın</label></div></section>`, gen: vGen, konu: vKonu, rapor: vRapor, bugun: vBugun, takvim: vTakvim, mushaf: vMushaf, mut: vMut, menu: vMenu, sina: vSina, takip: vTakip, ist: vIst, plan: vPlan, rehber: vRehber, ayar: vAyar, dinle: vDinle, hoca: vHoca, mukabele: vMukabele };
+const VIEWS = { ek: vEk, analiz: vGenel, sepet: vSepet, hatir: () => `<section><h2>Hatırlatmalar</h2>${vRemind()}<div class="card"><h3>Telefon</h3><label class="inline"><input type="checkbox" id="set-wake" ${S.settings.wake !== false ? "checked" : ""}> Mushaf açıkken ekran kapanmasın</label></div></section>`, gen: vGen, konu: vKonu, rapor: vRapor, bugun: vBugun, takvim: vTakvim, mushaf: vMushaf, mut: vMut, menu: vMenu, sina: vSina, takip: vTakip, ist: vIst, plan: vPlan, rehber: vRehber, ayar: vAyar, dinle: vDinle, hoca: vHoca, mukabele: vMukabele };
 let _rBusy = false, _rAgain = false;
 function render(){ if (_rBusy) { _rAgain = true; return; } _rBusy = true; try { _render(); } finally { _rBusy = false; } if (_rAgain) { _rAgain = false; setTimeout(render, 0); } }
 function _render(){
@@ -3260,7 +3496,12 @@ document.addEventListener("click", e => {
   if (a.mline) { const L = ui.lineRev || (ui.lineRev = {}); L[a.mline] = !L[a.mline]; return render(); }
   if (a.lwk) { ui.lwK = a.lwk; return render(); }
   if (a.sil) { ui.silLv = Math.max(1, Math.min(5, (+(ui.silLv || 2)) + (+a.sil))); ui.lineRev = {}; return render(); }
+  if (a.ekk) { ui.ek.k = a.ekk; if (a.ekk === "kod" && !ui.ek.txt) ui.ek.txt = pageCode(ui.ek.f).txt; return render(); }
+  if (a.ekopen != null) { const p0 = +a.ekopen || 0; ekOpen(ui.ek ? ui.ek.k : "mana", p0 || undefined, p0 || undefined); if (!["bugun", "mushaf", "ek"].includes(ui.tab)) return go("ek"); render(); const el = $("#ekform"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  if (a.ekmark) { const p = ui.page, pg = S.pages[p] || (S.pages[p] = {}); if (pg.ek && pg.ek[a.ekmark]) { delete pg.ek[a.ekmark]; mark("pages"); } else ekAdd({ k: a.ekmark, f: p, t: p }); return render(); }
+  if (a.ekdel) { ekDel(a.ekdel); return render(); }
   if (a.juzgo) { ui.tSeg = "cuz"; ui.juzSel = +a.juzgo; return go("takip"); }
+  if (a.nmzopen) { ui.nmz = ui.nmz === a.nmzopen ? null : a.nmzopen; return render(); }
   if (a.dlday) { dlOpen(); ui.dl.d = a.dlday; if (ui.tab !== "bugun" && a.dlday === TODAY) return go("bugun"); render(); const el = $("#dlform"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
   if (a.dq) { const [k, v] = a.dq.split("|"), d = ui.tab === "bugun" ? TODAY : ui.day, x = dayRec(d); x[k] = x[k] === v ? "" : v; markDay(d); return render(); }
   if (a.sp) { sepetTap(+a.sp); return render(); }
@@ -3330,6 +3571,12 @@ document.addEventListener("click", e => {
     icsexp(){ icsExport(); return true; },
     recsharesel(){ recShare(Object.keys(ui.recSel || {}).filter(k => ui.recSel[k])); return true; },
     dlnew(){ dlOpen(); },
+    nmzsave(){ const d = ui.nmz || TODAY, f = +($("#nm-f") || {}).value || 0, t = +($("#nm-t") || {}).value || f; if (!f) return true; const n = addNamaz(Math.max(1, Math.min(604, f)), Math.max(1, Math.min(604, t)), d); ui.nmz = null; toast(n + " sayfa namazda okundu olarak işlendi"); },
+    turnew(){ S.turlar = S.turlar || []; S.turlar.push({ d: TODAY, ad: (S.turlar.length + 1) + ". tur" }); mark("core"); toast("Yeni tur başladı; eski veriler duruyor"); },
+    ekclose(){ ui.ek = null; },
+    eksave(){ const E = ui.ek; if (!E) return true; ekAdd(E); ui.ek = null; toast(EKN[E.k] + " · s. " + E.f + (E.t !== E.f ? "–" + E.t : "") + " kaydedildi"); },
+    eksesli(){ const E = ui.ek; if (!E) return true; if (E.txt) ekAdd(E); ui.newRec = true; ui.rc = { p: E.f, p2: E.t, n: "", who: "", ref: false, title: EKN[E.k] + " · s. " + E.f + (E.t !== E.f ? "–" + E.t : ""), cid: "ek:" + E.k }; ui.ek = null; go("dinle"); return true; },
+    pgek(){ ui.pgEk = !ui.pgEk; },
     dlnew2(){ dlOpen(); go("bugun"); return true; },
     dlclose(){ ui.dl = null; },
     dlerradd(){ const D = ui.dl, ek = D.ek; D.errs.push({ k: ek.k, p: +ek.p || D.f, i: ek.i, r: (ek.r || "").trim(), cr: (ek.cr || "").trim() }); ek.r = ""; ek.cr = ""; ek.i = ""; },
@@ -3380,6 +3627,8 @@ document.addEventListener("change", e => {
     if (id === "dle-p") { ek.p = +val; ek.i = ""; return render(); }
     if (id === "dle-i") { ek.i = val; return; } if (id === "dle-r") { ek.r = val; return; } if (id === "dle-cr") { ek.cr = val; return; }
     if (id === "dl-who") { D.who = val; return; } if (id === "dl-how") { D.how = val; return; } if (id === "dl-min") { D.min = val; return; } if (id === "dl-n") { D.n = val; return; } }
+  if (id === "set-ek") { S.settings.ek = t.checked; mark("core"); return render(); }
+  if (ui.ek && /^ek-/.test(id)) { const E = ui.ek; if (id === "ek-txt") { E.txt = t.value; return; } E[id === "ek-f" ? "f" : "t"] = Math.max(1, Math.min(604, +t.value || 1)); if (id === "ek-f" && E.t < E.f) E.t = E.f; return render(); }
   if (id === "sp-goal") { S.sepetGoal = Math.max(1, Math.min(200, +t.value || 20)); mark("core"); return render(); }
   if (id === "sp-range") { ui.rangeMode = t.checked; ui.rangeA = null; return render(); }
   if (id === "rc-who") { rcv().who = t.value; return; }
