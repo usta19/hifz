@@ -508,6 +508,16 @@ body.hasaudio{padding-bottom:calc(230px + env(safe-area-inset-bottom,0px))}
 .prec .perr{color:var(--bad)}.pwho{margin:6px 0 4px;padding-left:8px;border-left:3px solid var(--gold)}.precbtn{margin-top:6px}
 .c-okt{color:var(--ok)}.c-warnt{color:var(--warn)}.c-badt{color:var(--bad)}
 
+.sbig{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}.sbig b{display:block;font-size:26px;color:var(--accent)}.sbig span{font-size:12px;color:var(--muted)}
+.sbar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--line);margin:10px 0 4px}.sbar i{display:block;height:100%}
+.s-ok{background:var(--ok)}.s-warn{background:var(--warn)}.s-bad{background:var(--bad)}.s-none{background:var(--line)}
+.sgrid{display:flex;flex-direction:column;gap:3px;margin:8px 0}.srow{display:flex;align-items:center;gap:6px}.scells{flex:1;min-width:0;display:flex;gap:2px}
+.sc{flex:1;min-width:0;height:22px;padding:0;border:0;border-radius:3px;cursor:pointer}.sc.sa{outline:2px solid var(--ink);outline-offset:1px}.sc.rd{background-image:radial-gradient(circle,var(--sheet) 22%,transparent 26%)}
+.sj{width:30px;min-width:30px;padding:2px 0;font-size:11px;border-radius:6px}.sj.full{background:var(--ok);color:#fff;border-color:var(--ok)}
+.br-ok.on{background:var(--ok);border-color:var(--ok)}.br-warn.on{background:var(--warn);border-color:var(--warn);color:#222}.br-bad.on{background:var(--bad);border-color:var(--bad)}
+.kalan{padding:6px 0;border-bottom:1px solid var(--line)}.kalan:last-child{border-bottom:0}
+.sgrp{padding:10px 0;border-top:1px solid var(--line)}.sgrp:first-of-type{border-top:0}.sgrp.done{background:var(--gold-soft);border-radius:10px;padding:10px}
+
 @media (max-width:430px){.grid3{grid-template-columns:1fr 1fr}.methods{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.stats.s3{grid-template-columns:repeat(3,1fr)}.juzgrid{grid-template-columns:repeat(5,1fr)}}
 @media (max-width:360px){.grid2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
@@ -899,6 +909,7 @@ function planIdx(d){ return diffD(S.plan.start, d) + (+S.plan.offset || 0); }
 function dayRec(d){ return S.days[d] || (S.days[d] = { done: {}, read: [], min: 0, t1: "", t2: "", weak: [], note: "" }); }
 function partsFor(d){
   const x = S.days[d];
+  if (sepetOn(d) && !(x && x.snap && d < TODAY)) return { parts: [], info: "Programsız (sepet)" };
   if (x && x.snap && (d < TODAY || (x.snap.pk && x.snap.pk !== planPK()) || x.snap.dyn)) return x.snap;
   if (diffD(S.plan.start, d) < 0) return { parts: [], info: "Plan " + trDY(S.plan.start) + " tarihinde başlıyor" };
   let r = curPlan().day(planIdx(d));
@@ -932,10 +943,10 @@ const KIND = { yeni: ["Yeni / odak", "k-yeni"], yakin: ["Yakın", "k-yakin"], uz
 function dayStatus(d){
   const x = S.days[d]; const pr = partsFor(d).parts.filter(p => p.kind !== "onarim");
   const doneN = x ? pr.filter(p => x.done[partKey(p)]).length : 0;
-  if (!pr.length) return x && (x.min || x.note) ? "part" : "none";
+  if (!pr.length) return x && x.read && x.read.length ? "full" : x && (x.min || x.note) ? "part" : "none";
   if (doneN === pr.length) return "full"; if (doneN > 0 || (x && x.min)) return "part"; return d < TODAY ? "miss" : "plan";
 }
-function readPages(d){ const x = S.days[d]; if (!x) return 0; const set = new Set(); const pr = partsFor(d).parts; pr.forEach(p => { if (x.done[partKey(p)]) partPageList(p).forEach(k => set.add(k)); }); return set.size; }
+function readPages(d){ const x = S.days[d]; if (!x) return 0; const set = new Set(x.read || []); const pr = partsFor(d).parts; pr.forEach(p => { if (x.done[partKey(p)]) partPageList(p).forEach(k => set.add(k)); }); return set.size; }
 function streak(){ let n = 0, d = TODAY; if (dayStatus(d) !== "full") d = addDays(d, -1); while (dayStatus(d) === "full" && n < 3000) { n++; d = addDays(d, -1); } return n; }
 const weekKey = d => { const dt = parse(d), w = (dt.getDay() + 6) % 7; dt.setDate(dt.getDate() - w); return ymd(dt); };
 
@@ -945,7 +956,7 @@ const docKeyOfDay = d => "d-" + d.slice(0, 7);
 function mark(...keys){ keys.forEach(k => { dirty.add(k); if (k.startsWith("tip-")) tipSave(k.slice(4)); }); persist(); }
 function markDay(d){ mark(docKeyOfDay(d)); }
 function bundle(k){
-  if (k === "core") return { settings: S.settings, plan: S.plan, planHist: S.planHist, weeks: S.weeks, quiz: S.quiz.slice(-300), bm: S.bm, muk: S.muk || null, share: !!S.share, shareName: S.shareName || "", imp: (S.imp || []).slice(-500), goals: S.goals || null, cardNew: S.cardNew || null, telafi: S.telafi || null, gen: S.gen || null, remind: S.remind || null, whoNames: S.whoNames || [], light: S.light || null, odevDone: S.odevDone || {}, ver: S.ver || {} };
+  if (k === "core") return { settings: S.settings, plan: S.plan, planHist: S.planHist, weeks: S.weeks, quiz: S.quiz.slice(-300), bm: S.bm, muk: S.muk || null, share: !!S.share, shareName: S.shareName || "", imp: (S.imp || []).slice(-500), goals: S.goals || null, cardNew: S.cardNew || null, telafi: S.telafi || null, gen: S.gen || null, mode: S.mode || "plan", modeFrom: S.modeFrom || "", sepetGoal: S.sepetGoal || 20, remind: S.remind || null, whoNames: S.whoNames || [], light: S.light || null, odevDone: S.odevDone || {}, ver: S.ver || {} };
   if (k === "srs") return S.srs;
   if (k === "recs") return S.recCloud || {};
   if (k.startsWith("tip-")) return S.tips[k.slice(4)] || null;
@@ -1070,10 +1081,10 @@ setInterval(() => { const el = $("#swt"); if (el && swState().run) el.textConten
 function vBugun(){
   const pf = partsFor(TODAY);
   const wk = weekKey(TODAY); let wmin = 0, wpg = 0; for (let k = 0; k < 7; k++) { const d = addDays(wk, k); wmin += (S.days[d] || {}).min || 0; wpg += readPages(d); }
-  return `<div class="card hero"><span class="k">${esc(S.plan.name || stageName(S.plan.stages[0]))}</span><span class="big">${esc(pf.info || "")}</span>
+  return `<div class="card hero"><span class="k">${sepetOn() ? "Ezber sepeti · programsız" : esc(S.plan.name || stageName(S.plan.stages[0]))}</span><span class="big">${sepetOn() ? sepetCounts().ok + " sağlam · " + (604 - sepetCounts().ok) + " kalan" : esc(pf.info || "")}</span>
    <div class="row between small"><span>${trD(TODAY)}</span><span class="num">${streak()} gün kesintisiz</span></div>
    <div class="row small num" style="gap:16px"><span>Bu hafta: ${fmtMin(wmin)}</span><span>${wpg} sayfa</span></div></div>
-   ${vOdevCard()}${vSmartPlan()}${dayView(TODAY)}`;
+   ${vOdevCard()}${sepetOn() ? vSepetToday() : vSmartPlan()}${dayView(TODAY)}`;
 }
 function vTakvim(){
   const [y, m] = ui.cal.split("-").map(Number), first = new Date(y, m - 1, 1), lead = (first.getDay() + 6) % 7, nd = new Date(y, m, 0).getDate();
@@ -1786,8 +1797,8 @@ let _lastRead = null, _lrKey = "";
 let _lrBusy = false;
 function lastReadMap(){
   if (_lrBusy) return _lastRead || {};
-  const k = Object.values(S.days).reduce((n, x) => n + Object.keys(x.done || {}).length, 0) + ":" + Object.keys(S.days).length + ":" + TODAY; if (_lastRead && _lrKey === k) return _lastRead;
-  _lrBusy = true; const m = {}; Object.keys(S.days).sort().forEach(d => { const x = S.days[d]; partsFor(d).parts.forEach(p => { if (x.done[partKey(p)]) partPageList(p).forEach(q => m[q] = d); }); });
+  const k = Object.values(S.days).reduce((n, x) => n + Object.keys(x.done || {}).length + ((x.read || []).length * 1000), 0) + ":" + Object.keys(S.days).length + ":" + TODAY; if (_lastRead && _lrKey === k) return _lastRead;
+  _lrBusy = true; const m = {}; Object.keys(S.days).sort().forEach(d => { const x = S.days[d]; partsFor(d).parts.forEach(p => { if (x.done[partKey(p)]) partPageList(p).forEach(q => m[q] = d); }); (x.read || []).forEach(q => m[q] = d); });
   _lrBusy = false; _lastRead = m; _lrKey = k; return m;
 }
 function pageRisk(p){
@@ -2364,6 +2375,69 @@ function vPageRecs(p){
    <div class="row"><button class="primary small" data-recnewp="me">● Bu sayfayı kaydet</button><button class="small" data-recnewp="file">Hafız kaydı ekle (MP3, video)</button></div></div>`;
 }
 
+/* ===== Ezber sepeti: programsız takip ===== */
+const sepetOn = d => S.mode === "sepet" && (!S.modeFrom || (d || TODAY) >= S.modeFrom);
+const PST = { ok: "Sağlam", warn: "Orta", bad: "Zayıf", "": "İşaretsiz" };
+function pst(p){ return (S.pages[p] && S.pages[p].st) || ""; }
+function setPst(p, v){ const pg = S.pages[p] || (S.pages[p] = {}); if (v) pg.st = v; else delete pg.st; }
+function rangesOf(L){ const out = []; L.slice().sort((a, b) => a - b).forEach(p => { const r = out[out.length - 1]; if (r && p === r[1] + 1) r[1] = p; else out.push([p, p]); }); return out; }
+const rangeTxt = R => R.map(([a, b]) => a === b ? String(a) : a + "–" + b).join(", ");
+function sepetCounts(){ const c = { ok: 0, warn: 0, bad: 0, "": 0 }; for (let p = 1; p <= 604; p++) c[pst(p)]++; return c; }
+function readToday(d){ const x = S.days[d || TODAY]; return (x && x.read) || []; }
+function addRead(pages, d){ d = d || TODAY; const x = dayRec(d); x.read = x.read || []; pages.forEach(p => { if (!x.read.includes(p)) x.read.push(p); }); markDay(d); }
+function delRead(pages, d){ d = d || TODAY; const x = S.days[d]; if (!x || !x.read) return; x.read = x.read.filter(p => !pages.includes(p)); markDay(d); }
+
+function sepetSuggest(){
+  const goal = +(S.sepetGoal || 20), done = new Set(readToday()), lr = lastReadMap();
+  const okP = [], weakP = [];
+  for (let p = 1; p <= 604; p++) { if (done.has(p)) continue; const s = pst(p); if (s === "ok") okP.push(p); else if (s === "warn" || s === "bad") weakP.push(p); }
+  const score = p => { const k = pageRisk(p); return k.r + (lr[p] ? 0 : 0.2); };
+  okP.sort((a, b) => score(b) - score(a) || a - b); weakP.sort((a, b) => (pst(b) === "bad") - (pst(a) === "bad") || score(b) - score(a) || a - b);
+  const nW = Math.min(weakP.length, Math.round(goal * 0.4)), nO = Math.min(okP.length, goal - nW);
+  const pick = (L, n) => { if (!n) return []; const seed = L[0], j = juzOfPage(seed); const same = L.filter(p => juzOfPage(p) === j).slice(0, n); return same.length >= n ? same : same.concat(L.filter(p => !same.includes(p)).slice(0, n - same.length)); };
+  return { tekrar: pick(okP, nO).sort((a, b) => a - b), guc: pick(weakP, nW).sort((a, b) => a - b), goal };
+}
+function vSepetToday(){
+  const sg = sepetSuggest(), rd = readToday(), C = sepetCounts();
+  const grp = (k, t, d, L) => L.length ? `<div class="sgrp"><div class="row between"><span><b>${t}</b> <span class="tiny">${d}</span></span><span class="num small">${L.length} s.</span></div>
+     <p class="small">${rangesOf(L).map(([a, b]) => `<button class="chip c-${k === "tekrar" ? "ok" : "warn"}" data-open="${a}">s. ${a === b ? a : a + "–" + b}</button>`).join(" ")}</p>
+     <button class="primary small" data-sread="${L.join(",")}">Okudum</button></div>` : "";
+  return `<div class="card sepet-today"><div class="row between"><h3>Bugün ne okuyayım?</h3><label class="inline tiny">Günlük<input type="number" id="sp-goal" value="${sg.goal}" min="1" max="200" style="width:4.5em" inputmode="numeric"> s.</label></div>
+   ${C.ok + C.warn + C.bad === 0 ? `<p class="small">Önce <button class="ghost small" data-tab="sepet">Ezber sepeti</button>'nde hangi sayfaların sağlam, hangilerinin zayıf olduğunu işaretle; öneriler ona göre gelir.</p>` : ""}
+   ${grp("tekrar", "Tekrar", "sağlam ama en uzun süredir okunmayan", sg.tekrar)}${grp("guc", "Güçlendir", "orta ve zayıf sayfalar", sg.guc)}
+   <details class="sgrp"><summary class="small"><b>Başka bir yer okudum</b></summary><div class="grid3"><label>Sayfadan<input type="number" id="sr-f" min="1" max="604" inputmode="numeric"></label><label>Sayfaya<input type="number" id="sr-t" min="1" max="604" inputmode="numeric"></label><label>&nbsp;<button class="small" data-act="sreadrange">Ekle</button></label></div></details>
+   ${rd.length ? `<div class="sgrp done"><b class="small">Bugün okuduğun: ${rd.length} sayfa</b><p class="small">${rangeTxt(rangesOf(rd))}</p>
+     <div class="row small">Nasıldı?${[["ok", "Sağlam"], ["warn", "Orta"], ["bad", "Zayıf"]].map(([v, l]) => `<button class="ghost small" data-sreadst="${v}">${l}</button>`).join("")}<button class="ghost small" data-act="sreadundo">Son ekleneni geri al</button></div></div>` : ""}</div>`;
+}
+function vSepet(){
+  const C = sepetCounts(), tot = 604, brush = ui.brush ?? "ok", sel = ui.rangeA;
+  const pct = v => (v / tot * 100).toFixed(1);
+  const rows = Array.from({ length: 30 }, (_, k) => { const j = k + 1, [a, b] = juzPages(j), cells = []; let ok = 0;
+    for (let p = a; p <= b; p++) { const s = pst(p); if (s === "ok") ok++; cells.push(`<button class="sc s-${s || "none"} ${sel === p ? "sa" : ""} ${readToday().includes(p) ? "rd" : ""}" data-sp="${p}" aria-label="Sayfa ${p}: ${PST[s]}"></button>`); }
+    return `<div class="srow"><button class="sj ${ok === b - a + 1 ? "full" : ""}" data-sj="${j}" aria-label="${j}. cüzün hepsini işaretle">${j}</button><div class="scells">${cells.join("")}</div><span class="tiny num">${ok}/${b - a + 1}</span></div>`; }).join("");
+  const kalan = []; for (let p = 1; p <= 604; p++) if (pst(p) !== "ok") kalan.push(p);
+  const byJ = {}; kalan.forEach(p => (byJ[juzOfPage(p)] = byJ[juzOfPage(p)] || []).push(p));
+  return `<section><h2>Ezber sepeti</h2>
+   <div class="card"><div class="sbig"><div><b class="num">${C.ok}</b><span>sağlam sayfa</span></div><div><b class="num">${tot - C.ok}</b><span>kalan</span></div><div><b class="num">%${pct(C.ok)}</b><span>tamam</span></div></div>
+    <div class="sbar"><i class="s-ok" style="width:${pct(C.ok)}%"></i><i class="s-warn" style="width:${pct(C.warn)}%"></i><i class="s-bad" style="width:${pct(C.bad)}%"></i></div>
+    <p class="tiny">Sağlam ${C.ok} · Orta ${C.warn} · Zayıf ${C.bad} · İşaretsiz ${C[""]}</p></div>
+   <div class="card"><div class="row between"><h3>İşaretle</h3><label class="inline small"><input type="checkbox" id="sp-range" ${ui.rangeMode ? "checked" : ""}> Aralık seç</label></div>
+    <div class="seg">${[["ok", "Sağlam"], ["warn", "Orta"], ["bad", "Zayıf"], ["", "Temizle"]].map(([v, l]) => `<button class="${brush === v ? "on" : ""} br-${v || "none"}" data-brush="${v}">${l}</button>`).join("")}</div>
+    <p class="tiny">${ui.rangeMode ? (sel ? `Başlangıç s. ${sel}. Şimdi bitiş sayfasına dokun.` : "Başlangıç sayfasına, sonra bitiş sayfasına dokun; aradaki hepsi işaretlenir.") : "Bir kutuya dokununca o sayfa, soldaki cüz numarasına dokununca bütün cüz seçili renkle işaretlenir."} Uzun basmana gerek yok. Bugün okuduğun sayfalar noktalı görünür.</p>
+    <div class="sgrid">${rows}</div>
+    <div class="row"><button class="ghost small" data-act="sallok">Hepsini sağlam say</button><button class="ghost small" data-act="sclear">Hepsini temizle</button></div></div>
+   <div class="card"><h3>Kalan ${kalan.length} sayfa</h3>${kalan.length ? Object.entries(byJ).map(([j, L]) => `<div class="kalan"><b class="small">${j}. cüz</b> <span class="small">${rangesOf(L).map(([a, b]) => `<button class="chip c-${pst(a) || "none"}" data-open="${a}">${a === b ? a : a + "–" + b}</button>`).join(" ")}</span></div>`).join("") : `<p class="empty">Bütün sayfalar sağlam sepette. Maşallah!</p>`}</div>
+   <div class="card"><h3>Kullanım şekli</h3>${seg("mode", [["plan", "Programlı"], ["sepet", "Programsız (sepet)"]], S.mode === "sepet" ? "sepet" : "plan")}
+    <p class="tiny">Programsızda Bugün ekranı plan yerine "Bugün ne okuyayım?" önerisini gösterir; okuduklarını "Okudum" ile işaretlersin. Sepet ve sayfa durumları iki şekilde de aynıdır; istediğin zaman geçebilirsin.</p></div>
+   ${vSepetToday()}</section>`;
+}
+function sepetTap(p){
+  const brush = ui.brush ?? "ok";
+  if (ui.rangeMode) { if (ui.rangeA == null) { ui.rangeA = p; return; } const a = Math.min(ui.rangeA, p), b = Math.max(ui.rangeA, p); for (let q = a; q <= b; q++) setPst(q, brush); ui.rangeA = null; toast("s. " + a + "–" + b + ": " + PST[brush]); }
+  else { setPst(p, pst(p) === brush && brush ? "" : brush); }
+  mark("pages");
+}
+
 /* ===== Kişisel ezber analizi ===== */
 function vAnaliz(){
   const E = S.err; if (!E.length && !S.quiz.length) return `<div class="card"><p class="empty">Analiz için önce hata kaydı ya da sınama sonucu gerekiyor. Dinletmede yakaladığın hataları Mushaf'ta ayete dokunup "Hata ekle" ile gir.</p></div>`;
@@ -2879,7 +2953,7 @@ const USUL = [
 
 /* ---------- Menü + Ayarlar ---------- */
 function vMenu(){
-  const it = [["sina", "Kendini sına", "Sayfa başı, sonraki ayet, hangi sayfa, hangi sure"], ["takip", "Takip", "Cüz renkleri, sayfa haritası, hata defteri, haftalık değerlendirme"], ["ist", "İstatistik", "Süre, sayfa ve başarı grafikleri"], ["plan", "Plan ve yöntemler", "Hatim, kademeli, sure sure, hizb, yakın–uzak, menzil"], ["dinle", "Ses kayıtları", "Kendi okuyuşların ve başka hafızların kayıtları; sayfa sayfa dinle, hatayı işaretle"], ["hoca", "Hoca ve arkadaş", "Durumunu paylaş, hocandan dinletme kaydı al"], ["mukabele", "Mukabele / Ramazan", "Okuyucular arasında günlük cüz paylaşımı"], ["hatir", "Hatırlatmalar", "Günün tekrarını iPhone Takvimi'ne ekle, bildirim gelsin"], ["gen", "Hazır içerik", "Claude içeriklerini bir kere hazırla; internetsiz ve Claude'suz sürümde de kullan"], ["konu", "Konu fihristi", "14 ana başlık, 17 bin alt konu: ayetleri konusuna göre bul"], ["rapor", "Hafızlık raporu", "Hocana verilecek özet: cüzler, dinletmeler, zayıf sayfalar"], ["rehber", "Rehber", "Cüz, sayfa, hizb başları, sureler, tecvid, kıraatler, Kur'an ilimleri"], ["ayar", "Ayarlar ve yedek", "Yazı boyutu, meal, süre tahmini, yedekleme"]];
+  const it = [["sina", "Kendini sına", "Sayfa başı, sonraki ayet, hangi sayfa, hangi sure"], ["takip", "Takip", "Cüz renkleri, sayfa haritası, hata defteri, haftalık değerlendirme"], ["ist", "İstatistik", "Süre, sayfa ve başarı grafikleri"], ["plan", "Plan ve yöntemler", "Hatim, kademeli, sure sure, hizb, yakın–uzak, menzil"], ["dinle", "Ses kayıtları", "Kendi okuyuşların ve başka hafızların kayıtları; sayfa sayfa dinle, hatayı işaretle"], ["hoca", "Hoca ve arkadaş", "Durumunu paylaş, hocandan dinletme kaydı al"], ["mukabele", "Mukabele / Ramazan", "Okuyucular arasında günlük cüz paylaşımı"], ["sepet", "Ezber sepeti", "Programsız takip: sağlam sayfaları işaretle, kalanı gör, günlük öneri al"], ["hatir", "Hatırlatmalar", "Günün tekrarını iPhone Takvimi'ne ekle, bildirim gelsin"], ["gen", "Hazır içerik", "Claude içeriklerini bir kere hazırla; internetsiz ve Claude'suz sürümde de kullan"], ["konu", "Konu fihristi", "14 ana başlık, 17 bin alt konu: ayetleri konusuna göre bul"], ["rapor", "Hafızlık raporu", "Hocana verilecek özet: cüzler, dinletmeler, zayıf sayfalar"], ["rehber", "Rehber", "Cüz, sayfa, hizb başları, sureler, tecvid, kıraatler, Kur'an ilimleri"], ["ayar", "Ayarlar ve yedek", "Yazı boyutu, meal, süre tahmini, yedekleme"]];
   return `<section><h2>Menü</h2><div class="methods">${it.map(([k, t, d]) => `<button class="method" data-tab="${k}"><b>${t}</b><span class="small muted">${d}</span></button>`).join("")}</div></section>`;
 }
 function vAyar(){
@@ -2897,7 +2971,7 @@ function vAyar(){
 
 /* ---------- çizim ---------- */
 const NAV = [["bugun", "Bugün", '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'], ["takvim", "Takvim", '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'], ["mushaf", "Mushaf", '<path d="M4 5c3-1 5-1 8 1v14c-3-2-5-2-8-1zM20 5c-3-1-5-1-8 1v14c3-2 5-2 8-1z"/>'], ["mut", "Müteşabih", '<path d="M4 7h7M4 12h7M4 17h7M14 7h6M14 12h6M14 17h6"/>'], ["menu", "Menü", '<circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>']];
-const VIEWS = { hatir: () => `<section><h2>Hatırlatmalar</h2>${vRemind()}<div class="card"><h3>Telefon</h3><label class="inline"><input type="checkbox" id="set-wake" ${S.settings.wake !== false ? "checked" : ""}> Mushaf açıkken ekran kapanmasın</label></div></section>`, gen: vGen, konu: vKonu, rapor: vRapor, bugun: vBugun, takvim: vTakvim, mushaf: vMushaf, mut: vMut, menu: vMenu, sina: vSina, takip: vTakip, ist: vIst, plan: vPlan, rehber: vRehber, ayar: vAyar, dinle: vDinle, hoca: vHoca, mukabele: vMukabele };
+const VIEWS = { sepet: vSepet, hatir: () => `<section><h2>Hatırlatmalar</h2>${vRemind()}<div class="card"><h3>Telefon</h3><label class="inline"><input type="checkbox" id="set-wake" ${S.settings.wake !== false ? "checked" : ""}> Mushaf açıkken ekran kapanmasın</label></div></section>`, gen: vGen, konu: vKonu, rapor: vRapor, bugun: vBugun, takvim: vTakvim, mushaf: vMushaf, mut: vMut, menu: vMenu, sina: vSina, takip: vTakip, ist: vIst, plan: vPlan, rehber: vRehber, ayar: vAyar, dinle: vDinle, hoca: vHoca, mukabele: vMukabele };
 function render(){
   const navOn = NAV.some(n => n[0] === ui.tab) ? ui.tab : "menu";
   $("#nav").innerHTML = NAV.map(n => `<button class="${navOn === n[0] ? "on" : ""}" data-tab="${n[0]}" aria-label="${n[1]}"><svg viewBox="0 0 24 24" aria-hidden="true">${n[2]}</svg>${n[1]}</button>`).join("");
@@ -2918,7 +2992,7 @@ function setWeak(d, p, add){
 document.addEventListener("click", e => {
   const b = e.target.closest("button,[data-goayah],[data-ayah],[data-lw],[data-mline]"); if (!b) return; const a = b.dataset;
   if (a.tab) return go(a.tab);
-  if (a.seg) { const v = a.v; if (a.seg === "onarim") { S.settings.onarim = v; const x = S.days[TODAY]; if (x) delete x.rep; mark("core"); markDay(TODAY); } else if (a.seg === "ist") ui.ist = +v; else if (a.seg === "m15") { S.settings.m15 = v === "1"; mark("core"); } else { ui[a.seg] = v; if (a.seg === "mSeg") ui.mquiz = null; } return render(); }
+  if (a.seg) { const v = a.v; if (a.seg === "onarim") { S.settings.onarim = v; const x = S.days[TODAY]; if (x) delete x.rep; mark("core"); markDay(TODAY); } else if (a.seg === "ist") ui.ist = +v; else if (a.seg === "mode") { S.mode = v; if (v === "sepet") S.modeFrom = TODAY; mark("core"); toast(v === "sepet" ? "Programsız kullanım açık: Bugün ekranı önerileri gösterecek" : "Programlı kullanıma dönüldü"); } else if (a.seg === "m15") { S.settings.m15 = v === "1"; mark("core"); } else { ui[a.seg] = v; if (a.seg === "mSeg") ui.mquiz = null; } return render(); }
   if (a.day) { ui.day = a.day; ui.cal = a.day.slice(0, 7); if (a.gocal) { ui.calMode = "ay"; ui.tab = "takvim"; } render(); if (a.gocal) window.scrollTo(0, 0); return; }
   if (a.open) return openPage(+a.open);
   if (a.goayah != null) { const i = +a.goayah; ui.sRes = ui.tab === "mushaf" ? ui.sRes : null; return openPage(pageOf(i), i); }
@@ -2943,6 +3017,11 @@ document.addEventListener("click", e => {
   if (a.mline) { const L = ui.lineRev || (ui.lineRev = {}); L[a.mline] = !L[a.mline]; return render(); }
   if (a.lwk) { ui.lwK = a.lwk; return render(); }
   if (a.sil) { ui.silLv = Math.max(1, Math.min(5, (+(ui.silLv || 2)) + (+a.sil))); ui.lineRev = {}; return render(); }
+  if (a.sp) { sepetTap(+a.sp); return render(); }
+  if (a.sj) { const [x, y] = juzPages(+a.sj), br = ui.brush ?? "ok"; for (let p = x; p <= y; p++) setPst(p, br); mark("pages"); toast(a.sj + ". cüz: " + PST[br]); return render(); }
+  if (a.brush != null) { ui.brush = a.brush; ui.rangeA = null; return render(); }
+  if (a.sread) { const L = a.sread.split(",").map(Number); addRead(L); ui.lastRead = L; toast(L.length + " sayfa okundu"); return render(); }
+  if (a.sreadst) { const L = ui.lastRead || readToday(); L.forEach(p => setPst(p, a.sreadst)); mark("pages"); toast(L.length + " sayfa: " + PST[a.sreadst]); return render(); }
   if (a.recgo) { ui.recOpen = a.recgo; ui.recF = ""; ui.recWho = ""; return go("dinle"); }
   if (a.recnewp) { const pg = ui.page; ui.newRec = true; ui.rc = { p: pg, p2: pg, n: "", who: a.recnewp === "me" ? "" : "", ref: false }; ui.rcFocus = a.recnewp; return go("dinle"); }
   if (a.recshare) { recShare([a.recshare]); return; }
@@ -2996,6 +3075,10 @@ document.addEventListener("click", e => {
     draftdel(){ DRAFT = null; draftClear(); },
     icsexp(){ icsExport(); return true; },
     recsharesel(){ recShare(Object.keys(ui.recSel || {}).filter(k => ui.recSel[k])); return true; },
+    sreadrange(){ const f = Math.max(1, Math.min(604, +($("#sr-f") || {}).value || 0)), t = Math.max(1, Math.min(604, +($("#sr-t") || {}).value || f)); if (!f) return true; const L = []; for (let p = Math.min(f, t); p <= Math.max(f, t); p++) L.push(p); addRead(L); ui.lastRead = L; toast(L.length + " sayfa bugün okundu olarak işlendi"); },
+    sreadundo(){ if (ui.lastRead) { delRead(ui.lastRead); ui.lastRead = null; } else toast("Geri alınacak bir şey yok"); },
+    sallok(){ let n = 0; for (let p = 1; p <= 604; p++) if (!pst(p)) { setPst(p, "ok"); n++; } mark("pages"); toast(n + " işaretsiz sayfa sağlam sayıldı"); },
+    sclear(){ if (!ui.sclearArm) { ui.sclearArm = 1; toast("Emin misin? Silmek için tekrar bas"); setTimeout(() => { ui.sclearArm = 0; }, 4000); return true; } ui.sclearArm = 0; for (let p = 1; p <= 604; p++) setPst(p, ""); mark("pages"); toast("Bütün işaretler temizlendi"); },
     pgrec(){ ui.pgRec = !ui.pgRec; },
     recbackupall(){ recBackupAll(); return true; }, lwreset(){ ui.lmk = {}; }, telafioff(){ S.telafi = null; mark("core"); }, lightoff(){ S.light = null; mark("core"); }, lrall(){ const PL = pageLines(ui.page) || []; ui.lineRev = {}; PL.forEach(o => ui.lineRev[ui.page + ":" + o.n] = true); }, lrnone(){ ui.lineRev = {}; },
     konok(){ const q = ui.quiz; q.done = true; quizLog(q.gs === q.side && q.gb === q.band); },
@@ -3031,6 +3114,8 @@ document.addEventListener("change", e => {
   if (id === "cal-m" || id === "cal-y") { ui.cal = $("#cal-y").value + "-" + pad($("#cal-m").value); return render(); }
   if (id === "cal-go" && t.value) { ui.day = t.value; ui.cal = t.value.slice(0, 7); return render(); }
   if (id === "pg-r") return openPage(+t.value);
+  if (id === "sp-goal") { S.sepetGoal = Math.max(1, Math.min(200, +t.value || 20)); mark("core"); return render(); }
+  if (id === "sp-range") { ui.rangeMode = t.checked; ui.rangeA = null; return render(); }
   if (id === "rc-who") { rcv().who = t.value; return; }
   if (id === "rec-who") { ui.recWho = t.value; return render(); }
   if (id === "rm-hm" || id === "rm-days" || id === "rm-mins") { S.remind = S.remind || { hm: "07:00", days: 30, mins: 45 }; S.remind[id.slice(3)] = id === "rm-hm" ? t.value : +t.value; mark("core"); return; }
