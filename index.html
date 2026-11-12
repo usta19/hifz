@@ -504,6 +504,10 @@ body.hasaudio{padding-bottom:calc(230px + env(safe-area-inset-bottom,0px))}
 .filebtn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border:1.5px dashed var(--accent);border-radius:12px;color:var(--accent);font-weight:600;cursor:pointer;margin:6px 0}.filebtn input{position:absolute;opacity:0;width:1px;height:1px}
 
 .trt .trtx{font-size:14px;line-height:1.6;max-height:60vh;overflow:auto}.trt .trtx p{margin:.4em 0}.trp{margin:10px 0;font-size:14px;line-height:1.6}.trp p{margin:.3em 0}
+.precs h4{margin:12px 0 4px}.prec{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}.prec:last-child{border-bottom:0}.prec .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.prec.on{background:var(--gold-soft);border-radius:10px}
+.prec .perr{color:var(--bad)}.pwho{margin:6px 0 4px;padding-left:8px;border-left:3px solid var(--gold)}.precbtn{margin-top:6px}
+.c-okt{color:var(--ok)}.c-warnt{color:var(--warn)}.c-badt{color:var(--bad)}
+
 @media (max-width:430px){.grid3{grid-template-columns:1fr 1fr}.methods{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.stats.s3{grid-template-columns:repeat(3,1fr)}.juzgrid{grid-template-columns:repeat(5,1fr)}}
 @media (max-width:360px){.grid2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
@@ -1308,7 +1312,8 @@ function vMushaf(){
      <div class="row between"><label class="inline small"><input type="checkbox" id="st-tj" ${S.settings.tj ? "checked" : ""}> Tecvid renkleri</label><label class="inline small">Meal<select id="msrc-sel2">${Object.entries(SRC).filter(([, v]) => v.tur === "meal").map(([k, v]) => opt(k, v.ad, S.settings.msrc || "diyanet")).join("")}</select></label></div>
      ${S.settings.tj ? tjLegend() : ""}<button class="ghost small" data-tab="dinle">Kendi kaydımı dinle</button></div>` : ""}
    ${ui.mMode === "test" || ui.mMode === "ilk" ? `<div class="row small muted">Gizli ayete dokun, açılsın. <button class="ghost small" data-act="revall">Tümünü aç</button><button class="ghost small" data-act="hideall">Gizle</button></div>` : ""}${ui.mMode === "satir" ? `<div class="row small muted">Her satırın yalnız ilk kelimesi görünür; ezberden devam et, satıra dokununca açılır. <button class="ghost small" data-act="lrall">Tümünü aç</button><button class="ghost small" data-act="lrnone">Gizle</button></div>` : ""}${ui.mMode === "sil" ? `<div class="row small muted nowrap">Silinen: <b class="num">%${(+(ui.silLv || 2)) * 20}</b><button class="ghost small" data-sil="-1" aria-label="Daha az sil">−</button><button class="ghost small" data-sil="1" aria-label="Daha çok sil">+</button><span>Her turda biraz daha sil; sayfanın görüntüsü aynı kalır.</span></div>` : ""}`;
-  const nav = `<div class="card mbar">${pager}${scrubber(p)}${tools}</div>${ui.mMode === "dinleyici" ? vListenBar() : ""}`;
+  const nRec = pgRecs(p).length;
+  const nav = `<div class="card mbar">${pager}${scrubber(p)}${tools}<div class="row"><button class="small ${ui.pgRec ? "on" : "ghost"} precbtn" data-act="pgrec">♪ Bu sayfanın kayıtları${nRec ? " (" + nRec + ")" : ""}</button></div></div>${ui.mMode === "dinleyici" ? vListenBar() : ""}${ui.pgRec ? vPageRecs(p) : ""}`;
   const gp = ui.goOpen ? goPanel() : "";
   if (foc) return `<section class="focus">${nav}${mushafSheet(p)}${sel != null ? ayahPanel(sel) : ""}</section>${gp}`;
   return `<section>${nav}
@@ -1557,14 +1562,14 @@ function vUlumRehber(){
 /* ===== Kendini dinle: ses kaydı ve takip ===== */
 let AUDIO = null;
 function idb(){ return new Promise((res, rej) => { try { const r = indexedDB.open("hifz-ses", 1); r.onupgradeneeded = () => r.result.createObjectStore("rec", { keyPath: "id" }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); }
-async function recList(){ try { const db = await idb(); return await new Promise(res => { const out = []; const tx = db.transaction("rec").objectStore("rec").openCursor(); tx.onsuccess = e => { const c = e.target.result; if (c) { const v = c.value; out.push({ id: v.id, p: v.p, p2: v.p2 || v.p, d: v.d, t: v.t || "", n: v.n || "", g: v.g || "", dur: v.dur || 0, errs: v.errs || [], ref: !!v.ref, who: v.who || "", video: /^video\//.test(v.mime || (v.blob && v.blob.type) || ""), size: v.size || (v.blob ? v.blob.size : 0), broken: !v.buf }); c.continue(); } else res(out); }; tx.onerror = () => res(out); }); } catch (e) { return []; } }
+async function recList(){ try { const db = await idb(); return await new Promise(res => { const out = []; const tx = db.transaction("rec").objectStore("rec").openCursor(); tx.onsuccess = e => { const c = e.target.result; if (c) { const v = c.value; out.push({ id: v.id, p: v.p, p2: v.p2 || v.p, d: v.d, t: v.t || "", n: v.n || "", g: v.g || "", dur: v.dur || 0, errs: v.errs || [], ref: !!v.ref, who: v.who || "", title: v.title || "", video: /^video\//.test(v.mime || (v.blob && v.blob.type) || ""), size: v.size || (v.blob ? v.blob.size : 0), broken: !v.buf }); c.continue(); } else res(out); }; tx.onerror = () => res(out); }); } catch (e) { return []; } }
 async function recSave(blob, p, n, p2){ const buf = await blob.arrayBuffer(), mime = blob.type || "audio/mp4"; if (!buf.byteLength) throw new Error("boş kayıt"); const db = await idb(), id = uid(), now = new Date(); await new Promise((res, rej) => { const tx = db.transaction("rec", "readwrite"); tx.objectStore("rec").put({ id, p, p2: Math.max(p, p2 || p), d: TODAY, t: pad(now.getHours()) + ":" + pad(now.getMinutes()), n, g: "", dur: 0, errs: [], buf, mime, size: buf.byteLength }); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); });
   const chk = await recGetLocal(id); if (!chk || !chk.blob || !chk.blob.size) throw new Error("kayıt doğrulanamadı"); return id; }
 function recNorm(v){ if (v && !v.blob && v.buf) v.blob = new Blob([v.buf], { type: v.mime || "audio/mp4" }); return v; }
 async function recMigrate(){ try { const db = await idb(); const old = await new Promise(res => { const out = []; const c = db.transaction("rec").objectStore("rec").openCursor(); c.onsuccess = e => { const x = e.target.result; if (x) { if (x.value.blob && !x.value.buf) out.push(x.value); x.continue(); } else res(out); }; c.onerror = () => res(out); });
   let bad = 0; for (const v of old) { let buf = null; try { buf = await v.blob.arrayBuffer(); } catch (e) {} if (!buf || !buf.byteLength) { bad++; continue; } v.buf = buf; v.mime = v.blob.type || "audio/mp4"; v.size = buf.byteLength; delete v.blob; await new Promise(res => { const tx = db.transaction("rec", "readwrite"); tx.objectStore("rec").put(v); tx.oncomplete = res; tx.onerror = res; }); }
   if (bad) { ui.recBad = bad; RECS = null; render(); } } catch (e) {} }
-async function recUpdate(id, fn){ try { const db = await idb(); await new Promise(res => { const tx = db.transaction("rec", "readwrite"), st = tx.objectStore("rec"), r = st.get(id); r.onsuccess = () => { if (r.result) { fn(r.result); st.put(r.result); } }; tx.oncomplete = res; tx.onerror = res; }); } catch (e) {} if (RECS) { const x = RECS.find(q => q.id === id); if (x) { const tmp = { errs: x.errs, g: x.g, n: x.n, dur: x.dur, ref: x.ref, who: x.who }; fn(tmp); Object.assign(x, tmp); } } const cc = S.recCloud && S.recCloud[id]; if (cc) { const tmp = { errs: cc.errs, g: cc.g, n: cc.n, dur: cc.dur, ref: cc.ref }; fn(tmp); Object.assign(cc, tmp); mark("recs"); } }
+async function recUpdate(id, fn){ try { const db = await idb(); await new Promise(res => { const tx = db.transaction("rec", "readwrite"), st = tx.objectStore("rec"), r = st.get(id); r.onsuccess = () => { if (r.result) { fn(r.result); st.put(r.result); } }; tx.oncomplete = res; tx.onerror = res; }); } catch (e) {} if (RECS) { const x = RECS.find(q => q.id === id); if (x) { const tmp = { errs: x.errs, g: x.g, n: x.n, dur: x.dur, ref: x.ref, who: x.who, title: x.title }; fn(tmp); Object.assign(x, tmp); } } const cc = S.recCloud && S.recCloud[id]; if (cc) { const tmp = { errs: cc.errs, g: cc.g, n: cc.n, dur: cc.dur, ref: cc.ref }; fn(tmp); Object.assign(cc, tmp); mark("recs"); } }
 async function recGet(id){ const loc = await recGetLocal(id); if (loc) return loc; if (S.recCloud && S.recCloud[id]) { toast("Kayıt buluttan iniyor…"); try { return await recFromCloud(id); } catch (e) { toast("Buluttan indirilemedi"); return null; } } return null; }
 async function recGetLocal(id){ const db = await idb(); return new Promise(res => { const r = db.transaction("rec").objectStore("rec").get(id); r.onsuccess = () => res(recNorm(r.result)); r.onerror = () => res(null); }); }
 async function recDel(id){ recCloudDel(id); const db = await idb(); return new Promise(res => { const tx = db.transaction("rec", "readwrite"); tx.objectStore("rec").delete(id); tx.oncomplete = res; tx.onerror = res; }); }
@@ -1592,7 +1597,7 @@ async function micStart(){
 function micStop(){ if (MREC) MREC.rec.stop(); }
 setInterval(() => { const el = $("#mrect"); if (el && MREC) { const t = Math.floor((Date.now() - MREC.t0) / 1000); el.textContent = pad(Math.floor(t / 60)) + ":" + pad(t % 60); } }, 500);
 function finishRec(blob, p, n, o){ o = o || {}; const p2 = Math.min(604, o.p2 || +rcv().p2 || p), who = (o.who != null ? o.who : rcv().who || "").trim(), isRef = o.ref != null ? o.ref : (!!rcv().ref || (who && who !== "Ben")); ui.newRec = false; ui.rc = null; whoRemember(who); recSave(blob, p, n, p2).then(async id => { draftClear(); DRAFT = null; if (isRef || who) await recUpdate(id, r => { if (isRef) r.ref = true; if (who) r.who = who; }); if (S.settings.recAuto) recBackup(id, true); RECS = null; toast("Kayıt arşive eklendi"); playRec(blob, recLabel({ p, p2, n }), p, id); }).catch(() => { toast("Kayıt bu cihaza saklanamadı; yine de dinleyebilirsin"); playRec(blob, "Sayfa " + p, p); }); }
-const recLabel = r => "Sayfa " + r.p + (r.p2 && r.p2 > r.p ? "–" + r.p2 : "") + (r.n ? " · " + r.n : "");
+const recLabel = r => recTitle(r);
 const fmtSec = x => { x = Math.round(x || 0); return Math.floor(x / 60) + ":" + pad(x % 60); };
 const GRADE = { ok: "Sağlam", warn: "Orta", bad: "Zayıf" };
 const rcv = () => ui.rc || (ui.rc = { p: ui.page, p2: ui.page, n: "" });
@@ -1627,12 +1632,13 @@ function vDinle(){
       <button class="playbtn ${playing ? "on" : ""}" data-recplay="${r.id}" aria-label="Dinle">${playing ? "♪" : "▶"}</button></div>
      ${open ? `<div class="rc-det">
        <div class="seg">${Object.entries(GRADE).map(([g, l]) => `<button class="${r.g === g ? "on" : ""}" data-recgrade="${r.id}|${g}">${l}</button>`).join("")}<button class="${!r.g ? "on" : ""}" data-recgrade="${r.id}|">—</button></div>
+       <div class="grid2"><label>Başlık<input data-rectitle="${r.id}" value="${esc(r.title || "")}" placeholder="${esc(recTitle(Object.assign({}, r, { title: "" })))}"></label><label>Okuyan<input data-recwho="${r.id}" list="who-list2" value="${esc(r.who || "")}" placeholder="Ben"></label></div><datalist id="who-list2">${whoList().map(w => `<option value="${esc(w)}">`).join("")}</datalist>
        <label>Not<input id="rn-${r.id}" data-recnote="${r.id}" value="${esc(r.n)}" placeholder="Bu okuma hakkında not"></label>
        <h4>Bu kayıtta işaretlenen hatalar (${E.length})</h4>
        ${E.length ? E.sort((a, b) => a.x.ts - b.x.ts).map(o => `<div class="item"><div class="t"><span class="small"><button class="tsbtn num" data-seek="${r.id}|${o.x.ts}">${fmtSec(o.x.ts)}</button> <b>s. ${o.e.p}</b> · ${esc(o.e.i >= 0 ? refStr(o.e.i) : "")} <span class="chip c-none">${esc(ERRN[o.e.k] || o.e.k)}</span></span>${o.e.r || o.e.cr ? `<span class="small">${o.e.r ? `<span class="danger">${esc(o.e.r)}</span> → ` : ""}<b>${esc(o.e.cr || "")}</b></span>` : ""}</div><button class="ghost small" data-recunlink="${r.id}|${o.e.id}">Kayıttan çıkar</button></div>`).join("") : `<p class="small muted">Dinlerken ayete dokunup "Hata ekle" dediğinde hata bu kayda, saniyesiyle bağlanır.</p>`}
        ${recCmp(r)}<div class="row"><button class="primary small" data-recplay="${r.id}">▶ Dinle ve takip et</button>${r.cloud ? "" : `<button class="small" data-recbak="${r.id}" ${ui.upBusy ? "disabled" : ""}>${ui.upBusy === r.id ? "Yükleniyor…" : "☁ Buluta yedekle"}</button>`}<button class="ghost small" data-recshare="${r.id}">Telefona kaydet / paylaş</button><button class="ghost small" data-recref="${r.id}">${r.ref ? "Referanslıktan çıkar" : "Referans olarak işaretle"}</button><button class="ghost small" data-open="${r.p}">Sayfayı aç</button>${confirmBtn("rec:" + r.id, "Kaydı sil")}</div></div>` : ""}</div>`; };
   if (!DRAFT && !draftCheck.t) { draftCheck.t = 1; draftCheck(); }
-  return `<section>${draftCard()}${ui.recBad ? `<div class="card warnc"><p class="small"><b>${ui.recBad} eski kaydın sesi bu telefonda okunamadı.</b> iPhone, eski sürümde kaydedilen bazı sesleri uygulama kapanınca boşaltmış. Yeni kayıtlar artık kalıcı saklanıyor.</p></div>` : ""}<div class="row between"><h2>Kendini dinle</h2><button class="primary" data-act="newrec">${ui.newRec ? "Kapat" : "● Yeni kayıt"}</button></div>
+  return `<section>${draftCard()}${ui.recBad ? `<div class="card warnc"><p class="small"><b>${ui.recBad} eski kaydın sesi bu telefonda okunamadı.</b> iPhone, eski sürümde kaydedilen bazı sesleri uygulama kapanınca boşaltmış. Yeni kayıtlar artık kalıcı saklanıyor.</p></div>` : ""}<div class="row between"><h2>Ses kayıtları</h2><button class="primary" data-act="newrec">${ui.newRec ? "Kapat" : "● Yeni kayıt"}</button></div>
    ${ui.newRec || MREC ? recNew() : ""}
    <div class="stats"><div class="stat"><b class="num">${RECS.length}</b><span>kayıt</span></div><div class="stat"><b class="num">${totErr}</b><span>işaretli hata</span></div><div class="stat c-ok"><b class="num">${cnt("ok")}</b><span>sağlam</span></div><div class="stat c-bad"><b class="num">${cnt("bad")}</b><span>zayıf</span></div></div>${RECS.length ? vCloudBar() : ""}
    <div class="row between"><div class="chips">${[["", "Tümü"], ["ref", "Referans"], ["ok", "Sağlam"], ["warn", "Orta"], ["bad", "Zayıf"], ["none", "Değerlendirilmemiş"]].map(([v, l]) => `<button class="fchip ${f === v ? "on" : ""}" data-recf="${v}">${l}</button>`).join("")}</div></div>${whoList().length > 1 ? `<label class="inline small">Okuyan<select id="rec-who"><option value="">Herkes</option>${whoList().map(w => opt(w, w, ui.recWho || "")).join("")}</select></label>` : ""}
@@ -2340,6 +2346,24 @@ async function wakeSync(){
 }
 document.addEventListener("visibilitychange", () => { WL = null; wakeSync(); });
 
+/* ===== Sayfaya özel ses kayıtları ===== */
+function recTitle(r){ if (r.title) return r.title; const s = ref(pStart(r.p))[0]; return SN(s) + " · s. " + r.p + (r.p2 && r.p2 > r.p ? "–" + r.p2 : ""); }
+function pgRecs(p){ if (RECS === null) { RECS = []; recList().then(l => { RECS = recMerge(l); render(); }); } return (RECS || []).filter(r => r.p <= p && (r.p2 || r.p) >= p).sort((a, b) => (b.d + b.t).localeCompare(a.d + a.t)); }
+function vPageRecs(p){
+  const L = pgRecs(p), mine = L.filter(r => !r.who || r.who === "Ben"), oth = L.filter(r => r.who && r.who !== "Ben"), G = {};
+  oth.forEach(r => (G[r.who] = G[r.who] || []).push(r));
+  const item = r => { const E = recErrs(r), on = AUDIO && AUDIO.id === r.id;
+    return `<div class="prec ${on ? "on" : ""}"><button class="playbtn ${on ? "on" : ""}" data-recplay="${r.id}" aria-label="Dinle">${on ? "♪" : "▶"}</button>
+     <div class="t"><b>${esc(recTitle(r))}</b><span class="tiny">${r.who && r.who !== "Ben" ? esc(r.who) + " · " : ""}${trDY(r.d)}${r.t ? " " + r.t : ""}${r.dur ? " · " + fmtSec(r.dur) : ""}${r.video ? " · video" : ""}${r.g ? ` · <span class="c-${r.g}t">${GRADE[r.g]}</span>` : ""}</span>
+      ${r.n ? `<span class="small">${esc(r.n)}</span>` : ""}
+      ${E.length ? `<span class="tiny perr">${E.length} hata: ${E.slice(0, 3).map(o => esc((o.e.i >= 0 ? ref(o.e.i).join(":") + " " : "") + ((ERRN[o.e.k] || o.e.k).split(" ")[0]) + (o.e.r ? " «" + o.e.r + "»" : ""))).join(" · ")}${E.length > 3 ? " …" : ""}</span>` : ""}</div>
+     <button class="ghost small" data-recgo="${r.id}">Ayrıntı</button></div>`; };
+  return `<div class="card precs"><div class="row between"><h3>Sayfa ${p} ses kayıtları</h3><button class="ghost small" data-act="pgrec" aria-label="Kapat">Kapat</button></div>
+   <h4>Benim okuyuşlarım (${mine.length})</h4>${mine.length ? mine.map(item).join("") : `<p class="small muted">Bu sayfayı henüz kaydetmedin.</p>`}
+   <h4>Diğer hafızlar (${oth.length})</h4>${oth.length ? Object.entries(G).map(([w, rs]) => `<div class="pwho"><b class="small gold">${esc(w)}</b>${rs.map(item).join("")}</div>`).join("") : `<p class="small muted">Başka hafızlardan bu sayfanın kaydı yok. MP3 ya da video ekleyip okuyanın adını yazabilirsin.</p>`}
+   <div class="row"><button class="primary small" data-recnewp="me">● Bu sayfayı kaydet</button><button class="small" data-recnewp="file">Hafız kaydı ekle (MP3, video)</button></div></div>`;
+}
+
 /* ===== Kişisel ezber analizi ===== */
 function vAnaliz(){
   const E = S.err; if (!E.length && !S.quiz.length) return `<div class="card"><p class="empty">Analiz için önce hata kaydı ya da sınama sonucu gerekiyor. Dinletmede yakaladığın hataları Mushaf'ta ayete dokunup "Hata ekle" ile gir.</p></div>`;
@@ -2855,7 +2879,7 @@ const USUL = [
 
 /* ---------- Menü + Ayarlar ---------- */
 function vMenu(){
-  const it = [["sina", "Kendini sına", "Sayfa başı, sonraki ayet, hangi sayfa, hangi sure"], ["takip", "Takip", "Cüz renkleri, sayfa haritası, hata defteri, haftalık değerlendirme"], ["ist", "İstatistik", "Süre, sayfa ve başarı grafikleri"], ["plan", "Plan ve yöntemler", "Hatim, kademeli, sure sure, hizb, yakın–uzak, menzil"], ["dinle", "Kendini dinle", "Ses kaydını mushafla takip ederek hata yakala"], ["hoca", "Hoca ve arkadaş", "Durumunu paylaş, hocandan dinletme kaydı al"], ["mukabele", "Mukabele / Ramazan", "Okuyucular arasında günlük cüz paylaşımı"], ["hatir", "Hatırlatmalar", "Günün tekrarını iPhone Takvimi'ne ekle, bildirim gelsin"], ["gen", "Hazır içerik", "Claude içeriklerini bir kere hazırla; internetsiz ve Claude'suz sürümde de kullan"], ["konu", "Konu fihristi", "14 ana başlık, 17 bin alt konu: ayetleri konusuna göre bul"], ["rapor", "Hafızlık raporu", "Hocana verilecek özet: cüzler, dinletmeler, zayıf sayfalar"], ["rehber", "Rehber", "Cüz, sayfa, hizb başları, sureler, tecvid, kıraatler, Kur'an ilimleri"], ["ayar", "Ayarlar ve yedek", "Yazı boyutu, meal, süre tahmini, yedekleme"]];
+  const it = [["sina", "Kendini sına", "Sayfa başı, sonraki ayet, hangi sayfa, hangi sure"], ["takip", "Takip", "Cüz renkleri, sayfa haritası, hata defteri, haftalık değerlendirme"], ["ist", "İstatistik", "Süre, sayfa ve başarı grafikleri"], ["plan", "Plan ve yöntemler", "Hatim, kademeli, sure sure, hizb, yakın–uzak, menzil"], ["dinle", "Ses kayıtları", "Kendi okuyuşların ve başka hafızların kayıtları; sayfa sayfa dinle, hatayı işaretle"], ["hoca", "Hoca ve arkadaş", "Durumunu paylaş, hocandan dinletme kaydı al"], ["mukabele", "Mukabele / Ramazan", "Okuyucular arasında günlük cüz paylaşımı"], ["hatir", "Hatırlatmalar", "Günün tekrarını iPhone Takvimi'ne ekle, bildirim gelsin"], ["gen", "Hazır içerik", "Claude içeriklerini bir kere hazırla; internetsiz ve Claude'suz sürümde de kullan"], ["konu", "Konu fihristi", "14 ana başlık, 17 bin alt konu: ayetleri konusuna göre bul"], ["rapor", "Hafızlık raporu", "Hocana verilecek özet: cüzler, dinletmeler, zayıf sayfalar"], ["rehber", "Rehber", "Cüz, sayfa, hizb başları, sureler, tecvid, kıraatler, Kur'an ilimleri"], ["ayar", "Ayarlar ve yedek", "Yazı boyutu, meal, süre tahmini, yedekleme"]];
   return `<section><h2>Menü</h2><div class="methods">${it.map(([k, t, d]) => `<button class="method" data-tab="${k}"><b>${t}</b><span class="small muted">${d}</span></button>`).join("")}</div></section>`;
 }
 function vAyar(){
@@ -2919,6 +2943,8 @@ document.addEventListener("click", e => {
   if (a.mline) { const L = ui.lineRev || (ui.lineRev = {}); L[a.mline] = !L[a.mline]; return render(); }
   if (a.lwk) { ui.lwK = a.lwk; return render(); }
   if (a.sil) { ui.silLv = Math.max(1, Math.min(5, (+(ui.silLv || 2)) + (+a.sil))); ui.lineRev = {}; return render(); }
+  if (a.recgo) { ui.recOpen = a.recgo; ui.recF = ""; ui.recWho = ""; return go("dinle"); }
+  if (a.recnewp) { const pg = ui.page; ui.newRec = true; ui.rc = { p: pg, p2: pg, n: "", who: a.recnewp === "me" ? "" : "", ref: false }; ui.rcFocus = a.recnewp; return go("dinle"); }
   if (a.recshare) { recShare([a.recshare]); return; }
   if (a.recbak) { recBackup(a.recbak); return; }
   if (a.offget) { offlineGet(a.offget); return; }
@@ -2933,7 +2959,7 @@ document.addEventListener("click", e => {
   if (a.recref) { const id = a.recref; recUpdate(id, r => { r.ref = !r.ref; }).then(render); return; }
   if (a.cmp) { const [mine, rid] = a.cmp.split("|"); Promise.all([recGet(mine), recGet(rid)]).then(([m, r]) => { if (!m || !r) return; playRec(m.blob, recLabel(m) + " · " + trDY(m.d), m.p, mine); AUDIO.cmp = { id: rid, url: URL.createObjectURL(r.blob), label: recLabel(r) }; render(); }); return; }
   if (a.rate) { AUDIO.rate = +a.rate; const el = $("#aplayer"); if (el) el.playbackRate = AUDIO.rate; document.querySelectorAll("[data-rate]").forEach(x => x.classList.toggle("on", +x.dataset.rate === AUDIO.rate)); return; }
-  if (a.recplay) { const id = a.recplay; if (AUDIO && AUDIO.id === id) { const el = $("#aplayer"); if (el) el.paused ? el.play() : el.pause(); return; } recGet(id).then(r => { if (r) { playRec(r.blob, recLabel(r) + " · " + trDY(r.d), r.p, id); setTimeout(() => { const el = $("#aplayer"); if (el) el.play().catch(() => {}); }, 300); } }); return; }
+  if (a.recplay) { const id = a.recplay; if (AUDIO && AUDIO.id === id) { const x = RECS && RECS.find(q => q.id === id); if (x) { AUDIO.label = recLabel(x) + " · " + trDY(x.d); const lb = document.querySelector("#abar .abar b"); if (lb) lb.textContent = AUDIO.label; } const el = $("#aplayer"); if (el) el.paused ? el.play() : el.pause(); return; } recGet(id).then(r => { if (r) { playRec(r.blob, recLabel(r) + " · " + trDY(r.d), r.p, id); setTimeout(() => { const el = $("#aplayer"); if (el) el.play().catch(() => {}); }, 300); } }); return; }
   if (a.recopen) { ui.recOpen = ui.recOpen === a.recopen ? null : a.recopen; return render(); }
   if (a.recf != null) { ui.recF = a.recf; return render(); }
   if (a.recgrade) { const [id, g] = a.recgrade.split("|"); recUpdate(id, r => { r.g = g; }).then(render); return; }
@@ -2970,6 +2996,7 @@ document.addEventListener("click", e => {
     draftdel(){ DRAFT = null; draftClear(); },
     icsexp(){ icsExport(); return true; },
     recsharesel(){ recShare(Object.keys(ui.recSel || {}).filter(k => ui.recSel[k])); return true; },
+    pgrec(){ ui.pgRec = !ui.pgRec; },
     recbackupall(){ recBackupAll(); return true; }, lwreset(){ ui.lmk = {}; }, telafioff(){ S.telafi = null; mark("core"); }, lightoff(){ S.light = null; mark("core"); }, lrall(){ const PL = pageLines(ui.page) || []; ui.lineRev = {}; PL.forEach(o => ui.lineRev[ui.page + ":" + o.n] = true); }, lrnone(){ ui.lineRev = {}; },
     konok(){ const q = ui.quiz; q.done = true; quizLog(q.gs === q.side && q.gb === q.band); },
     apnuzul(){ genNuzul(+a.i); return true; }, kirall(){ KIR.forEach(([v]) => loadX("k-" + v, "src/kiraat/" + v + ".json")); }, konumore(){ ui.konuLim = (ui.konuLim || 30) + 30; }, cardshow(){ ui.card.shown = true; }, report(){ downloadReport(); return true; }, shrefresh(){ SHARE_LIST = null; }, mtray(){ ui.mTray = !ui.mTray; }, goopen(){ ui.goOpen = true; }, goclose(){ ui.goOpen = false; },
@@ -3011,6 +3038,8 @@ document.addEventListener("change", e => {
   if (id === "rc-p" || id === "rc-p2" || id === "rc-n") { const r = rcv(); r[id === "rc-p" ? "p" : id === "rc-p2" ? "p2" : "n"] = id === "rc-n" ? t.value : Math.max(1, Math.min(604, +t.value || 1)); if (id === "rc-p" && +r.p2 < +r.p) { r.p2 = r.p; const e2 = $("#rc-p2"); if (e2) e2.value = r.p; } return; }
   if (a.recsel) { (ui.recSel = ui.recSel || {})[a.recsel] = t.checked; return render(); }
   if (a.recnote) { recUpdate(a.recnote, r => { r.n = t.value.trim(); }); return; }
+  if (a.rectitle) { const rid = a.rectitle; recUpdate(rid, r => { r.title = t.value.trim(); }).then(() => { if (AUDIO && AUDIO.id === rid) { const x = RECS.find(q => q.id === rid); if (x) { AUDIO.label = recLabel(x) + " · " + trDY(x.d); const lb = document.querySelector("#abar .abar b"); if (lb) lb.textContent = AUDIO.label; } } render(); }); return; }
+  if (a.recwho) { const w = t.value.trim(); whoRemember(w); recUpdate(a.recwho, r => { r.who = w; if (w && w !== "Ben") r.ref = true; }).then(render); return; }
   if (id === "msrc-sel" || id === "msrc-sel2") { S.settings.msrc = t.value; mark("core"); loadSrc(t.value); return render(); }
   if (a.mlist) { let L = S.settings.mlist || ["diyanet", "elmalili"]; L = t.checked ? [...new Set([...L, a.mlist])] : L.filter(x => x !== a.mlist); S.settings.mlist = Object.keys(SRC).filter(k => L.includes(k)); mark("core"); return render(); }
   if (id === "st-tj") { S.settings.tj = t.checked; mark("core"); return render(); }
