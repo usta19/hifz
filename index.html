@@ -533,6 +533,16 @@ details.perr{padding:6px 0;border-bottom:1px solid var(--line)}details.perr summ
 .dladd{background:var(--sheet);border:1px dashed var(--line);border-radius:12px;padding:10px;margin:8px 0;display:flex;flex-direction:column;gap:8px}.dladd .chips{flex-wrap:wrap}
 .dlrow{padding:4px 0}
 
+.dsum{display:flex;flex-direction:column;gap:8px}.dstats{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px}.dstats b{font-size:17px;color:var(--accent)}
+.dline{display:flex;align-items:center;gap:8px;min-width:0}.dline.wrap{align-items:flex-start}.dline .small{min-width:0}
+.qrow{display:flex;flex-direction:column;gap:4px}.qseg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.qseg button{padding:7px 4px;font-size:13px}.qseg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+details.dmore summary{cursor:pointer;list-style:none}details.dmore summary::-webkit-details-marker{display:none}details.dmore summary::before{content:"▸ ";color:var(--muted)}details.dmore[open] summary::before{content:"▾ "}
+.dmin{padding-top:10px;margin-top:10px;border-top:1px solid var(--line)}.dmin h4{margin:0 0 6px}
+.jseg{display:flex;gap:1px;width:100%;height:5px;margin:3px 0 2px}.jseg i{flex:1;border-radius:1px;background:var(--line)}.jseg i.s-ok{background:var(--ok)}.jseg i.s-warn{background:var(--warn)}.jseg i.s-bad{background:var(--bad)}
+.juz .jseg{height:4px}.juz.c-part,.jdl.c-part{background:var(--sheet);color:var(--ink);border:1.5px dashed var(--accent)}.stat.c-part b{color:var(--accent)}
+.jdl .jseg{width:80%}.jcov{margin:8px 0}.jcov .jseg{height:8px}
+.item.efixed{opacity:.7}.item.efixed .t > b{text-decoration:line-through}
+
 @media (max-width:430px){.grid3{grid-template-columns:1fr 1fr}.methods{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.stats.s3{grid-template-columns:repeat(3,1fr)}.juzgrid{grid-template-columns:repeat(5,1fr)}}
 @media (max-width:360px){.grid2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
@@ -1063,35 +1073,30 @@ const ERRK = [["kelime", "Kelime değişikliği"], ["atlama", "Atlama / ekleme"]
 const ERRN = Object.fromEntries(ERRK);
 
 /* ---------- gün görünümü (Bugün + Takvim) ---------- */
-function dayView(d){
+function dayView(d, noSum){
   const x = S.days[d] || { done: {}, min: 0, weak: [], note: "", t1: "", t2: "" };
   const pf = partsFor(d), parts = pf.parts, total = parts.reduce((s, p) => s + partPages(p), 0);
   const done = parts.filter(p => x.done[partKey(p)]).length;
   const errs = S.err.filter(e => e.d === d), dl = []; for (const j in S.juz) (S.juz[j].logs || []).forEach(l => { if (l.d === d) dl.push([j, l]); });
   const sw = swState();
-  return `<div class="card">
+  return `${noSum ? "" : vDaySum(d)}${parts.length || !sepetOn(d) ? `<div class="card">
    <div class="row between"><h3>${esc(pf.info || "Plan")}</h3><span class="small muted num">${done}/${parts.length} · ${Math.round(total)} sayfa · ~${est(total)}</span></div>
    <div class="bar"><i style="width:${parts.length ? done / parts.length * 100 : 0}%"></i></div>
    ${parts.length ? parts.map(p => { const k = partKey(p), K = KIND[p.kind] || KIND.tekrar, on = !!x.done[k]; return `<div class="check ${on ? "done" : ""}"><input type="checkbox" id="pt-${esc(k)}" data-part="${esc(k)}" ${on ? "checked" : ""} aria-label="${esc(p.lab)}"><label class="t" for="pt-${esc(k)}"><span class="kind ${K[1]}">${K[0]}</span>${yolChip(p.yol)} <b>${esc(p.lab)}</b><br><span class="small muted num">${Math.round(partPages(p))} sayfa · ~${est(partPages(p))}</span></label>${p.yol === "kayit" ? `<button class="small" data-recnewr="${p.f}-${p.t}">● Kaydet</button>` : ""}${p.yol === "dinlet" ? `<button class="small" data-dlopen="${p.f}-${p.t}">Dinlettim…</button>` : ""}<button class="ghost small" data-open="${p.f}">Aç</button></div>`; }).join("") : `<p class="empty">Bu gün için plan yok.</p>`}
-  </div>
-  <div class="card"><h3>Süre</h3>
+  </div>` : ""}<details class="card dmore" ${ui.dmore || ui.addErrDay === d ? "open" : ""}><summary><b>Süre, not, zayıf sayfa ve hatalar</b><span class="small muted"> ${fmtMin(x.min || 0)}${errs.length ? " · " + errs.length + " hata" : ""}</span></summary><div class="dmin"><h4>Süre</h4>
    <div class="grid3"><label>Saat<input type="number" min="0" inputmode="numeric" id="dm-h" value="${Math.floor((x.min || 0) / 60)}"></label><label>Dakika<input type="number" min="0" max="59" inputmode="numeric" id="dm-m" value="${(x.min || 0) % 60}"></label><label>Toplam<output class="num big2">${fmtMin(x.min)}</output></label></div>
    <div class="grid2"><label>Başladım<input type="time" id="dm-t1" value="${esc(x.t1 || "")}"></label><label>Bitirdim<input type="time" id="dm-t2" value="${esc(x.t2 || "")}"></label></div>
    ${d === TODAY ? `<div class="row between sw"><span class="num swt" id="swt">${swText()}</span><div class="row"><button data-act="sw">${sw.run ? "Durdur" : "Kronometre başlat"}</button>${sw.acc || sw.run ? `<button class="ghost" data-act="swadd">Süreye ekle</button><button class="ghost" data-act="swreset">Sıfırla</button>` : ""}</div></div>` : ""}
-  </div>
-  <div class="card"><h3>Zayıf sayfalar</h3>
+  </div><div class="dmin"><h4>Zayıf sayfalar</h4>
    <div class="row">${(x.weak || []).map(p => `<button class="chip c-warn num" data-weakrm="${p}" aria-label="${p}. sayfayı kaldır">s. ${p} ×</button>`).join("") || `<span class="small muted">Takıldığın sayfaları ekle; sayfa takibine de işlenir.</span>`}</div>
    <form class="row nowrap" id="weakform"><input id="wk-p" type="number" min="1" max="604" inputmode="numeric" placeholder="Sayfa no"><button type="submit">Ekle</button></form>
-  </div>
-  <div class="card"><h3>Not</h3><textarea id="dm-note" placeholder="Bugün nasıl geçti, nerede zorlandın?">${esc(x.note || "")}</textarea></div>
-  <div class="card"><div class="row between"><h3>O günün hataları (${errs.length})</h3><button class="ghost small" data-act="erradd">+ Hata ekle</button></div>
+  </div><div class="dmin"><h4>Not</h4><textarea rows="2" id="dm-note" placeholder="Bugün nasıl geçti, nerede zorlandın?">${esc(x.note || "")}</textarea></div><div class="dmin"><div class="row between"><h4>O günün hataları (${errs.length})</h4><button class="ghost small" data-act="erradd">+ Hata ekle</button></div>
    ${errs.length ? errs.map(errRow).join("") : `<p class="empty">Kayıtlı hata yok.</p>`}
    ${ui.addErrDay === d ? errForm({ d }) : ""}
-   ${dl.length ? `<h3 style="margin-top:6px">Dinletmeler</h3>` + dl.map(([j, l]) => `<div class="small">${j}. cüz ${chip(colorOf(l))} <span class="num">${l.h} hata · ${l.t} takılma</span></div>`).join("") : ""}
-  </div>`;
+  </div></details>`;
 }
 function errRow(e){
-  return `<div class="item"><div class="t"><b class="num">${e.c > 1 ? "★ " : ""}s. ${e.p}</b> · ${e.i >= 0 ? esc(refStr(e.i)) : esc(e.a || "")} <span class="chip c-none">${esc(ERRN[e.k] || e.k)}</span>
+  return `<div class="item ${e.fix ? "efixed" : ""}"><div class="t"><b class="num">${e.c > 1 ? "★ " : ""}s. ${e.p}</b> · ${e.i >= 0 ? esc(refStr(e.i)) : esc(e.a || "")} <span class="chip c-none">${esc(ERRN[e.k] || e.k)}</span> ${errCtx(e)}${errFix(e)}
    ${e.i >= 0 && TXT ? `<div class="ar sm" dir="rtl" lang="ar">${esc(AR(e.i))}</div>` : ""}
    <div class="small">${e.r ? `<span class="danger">${esc(e.r)}</span> → ` : ""}<b>${esc(e.cr || "")}</b></div><div class="small muted num">${e.c} kez · son ${trDY(e.d)}</div></div>
    <div class="col"><button class="small" data-errinc="${e.id}">Yine yaptım</button><button class="ghost small" data-open="${e.p}">Sayfa</button>${confirmBtn("err:" + e.id)}</div></div>`;
@@ -1111,7 +1116,7 @@ function vBugun(){
   return `<div class="card hero"><span class="k">${sepetOn() ? "Ezber sepeti · programsız" : esc(S.plan.name || stageName(S.plan.stages[0]))}</span><span class="big">${sepetOn() ? sepetCounts().ok + " sağlam · " + (604 - sepetCounts().ok) + " kalan" : esc(pf.info || "")}</span>
    <div class="row between small"><span>${trD(TODAY)}</span><span class="num">${streak()} gün kesintisiz</span></div>
    <div class="row small num" style="gap:16px"><span>Bu hafta: ${fmtMin(wmin)}</span><span>${wpg} sayfa</span></div></div>
-   ${vStages()}${vOdevCard()}${vDlToday()}${sepetOn() ? vSepetToday() : vSmartPlan()}${dayView(TODAY)}`;
+   ${ui.dl ? vDlForm() : vDaySum(TODAY)}${vStages()}${vOdevCard()}${sepetOn() ? vSepetToday() : vSmartPlan()}${dayView(TODAY, true)}`;
 }
 function vTakvim(){
   const [y, m] = ui.cal.split("-").map(Number), first = new Date(y, m - 1, 1), lead = (first.getDay() + 6) % 7, nd = new Date(y, m, 0).getDate();
@@ -1130,7 +1135,7 @@ function vTakvim(){
     <div class="row small legend"><span><i class="lg st-full"></i>Tamam</span><span><i class="lg st-part"></i>Eksik</span><span><i class="lg st-miss"></i>Kaçırıldı</span><span><i class="lg st-plan"></i>Planlı</span></div>
     <div class="row small muted num" style="gap:14px"><span>${MON[m - 1]}: ${mfull} tam gün</span><span>${fmtMin(mtot)}</span><span>${mpg} sayfa</span></div>
    </div>
-   <h2>${trD(ui.day)}</h2>${dayView(ui.day)}</section>`;
+   <h2>${trD(ui.day)}</h2>${ui.dl && ui.dl.d === ui.day ? vDlForm() : ""}${dayView(ui.day)}</section>`;
 }
 function vTakvimListe(){
   const f = ui.calF, rows = []; let d = f.to || TODAY; const from = f.from || addDays(TODAY, -365); let guard = 0;
@@ -2101,7 +2106,7 @@ function vKonumQ(q){
 function lwTap(i, k, txt){
   const L = ui.lmk || (ui.lmk = {}), key = i * 100 + k;
   if (L[key]) { const id = L[key]; S.err = S.err.filter(e => e.id !== id); delete L[key]; mark("err"); toast("Hata geri alındı"); return; }
-  const kind = ui.lwK || "kelime", e = { id: uid(), p: pageOf(i), i, a: refStr(i), k: kind, r: txt, cr: "", c: 1, d: TODAY, w: k, by: ui.lwWho || "" };
+  const kind = ui.lwK || "kelime", e = { id: uid(), p: pageOf(i), i, a: refStr(i), k: kind, r: txt, cr: "", c: 1, d: TODAY, w: k, by: ui.lwWho || "", ctx: "dinlet" };
   S.err.unshift(e); L[key] = e.id; mark("err");
   if (AUDIO && AUDIO.id) { const el = $("#aplayer"), ts = el ? Math.floor(el.currentTime) : 0; recUpdate(AUDIO.id, r => { r.errs = (r.errs || []).concat([{ eid: e.id, ts }]); }); }
 }
@@ -2527,7 +2532,7 @@ function vGenel(){
   // dinletme
   const logs = []; for (let j = 1; j <= 30; j++) ((S.juz[j] || {}).logs || []).forEach(l => logs.push(Object.assign({ j }, l)));
   const d30 = addDays(TODAY, -29), logs30 = logs.filter(l => l.d >= d30);
-  const jDl = Array.from({ length: 30 }, (_, k) => { const l = lastLog(k + 1); return `<button class="jdl c-${colorOf(l)}" data-tab="takip" title="${k + 1}. cüz">${k + 1}<small>${l ? trD(l.d) : "—"}</small></button>`; }).join("");
+  const jDl = Array.from({ length: 30 }, (_, k) => { const l = lastLog(k + 1), cv = juzCov(k + 1); return `<button class="jdl c-${cv.color}" data-juzgo="${k + 1}" title="${k + 1}. cüz: ${esc(cv.desc)}">${k + 1}${cv.dl ? cv.bar : ""}<small>${l ? trD(l.d) : "—"}</small></button>`; }).join("");
   const never = Array.from({ length: 30 }, (_, k) => k + 1).filter(j => !lastLog(j));
   let pgDl = 0, pgDl30 = 0; for (let p = 1; p <= 604; p++) { const dl = S.pages[p] && S.pages[p].dl; if (dl) { pgDl++; if (dl >= d30) pgDl30++; } }
   // okuma
@@ -2536,9 +2541,9 @@ function vGenel(){
     partsFor(d).parts.forEach(pt => { if (x.done[partKey(pt)]) yolN[pt.yol || "oku"] += partPages(pt); }); yolN.oku += (x.read || []).length; }
   const recs = (RECS || []); const recMine = recs.filter(r => !r.who || r.who === "Ben").length;
   // hatalar
-  const byK = {}, byP = {}; S.err.forEach(e => { byK[e.k] = (byK[e.k] || 0) + e.c; (byP[e.p] = byP[e.p] || []).push(e); });
+  const byK = {}, byP = {}; S.err.filter(e => !e.fix).forEach(e => { byK[e.k] = (byK[e.k] || 0) + e.c; (byP[e.p] = byP[e.p] || []).push(e); });
   const topP = Object.entries(byP).map(([p, L]) => [+p, L, L.reduce((s, e) => s + e.c, 0)]).sort((a, b) => b[2] - a[2]).slice(0, 15);
-  const totE = S.err.reduce((s, e) => s + e.c, 0), risk = riskList(8).filter(x => x[1].r >= .5);
+  const totE = S.err.filter(e => !e.fix).reduce((s, e) => s + e.c, 0), fixN = S.err.filter(e => e.fix).length, risk = riskList(8).filter(x => x[1].r >= .5);
   return `<section><h2>Analiz</h2>
    <div class="card"><div class="row between"><h3>Sağlamlık</h3><button class="ghost small" data-tab="sepet">Sepeti aç</button></div>
     <div class="sbig"><div><b class="num">${C.ok}</b><span>sağlam</span></div><div><b class="num">${C.warn + C.bad}</b><span>orta/zayıf</span></div><div><b class="num">%${pct(C.ok)}</b><span>tamam</span></div></div>
@@ -2552,7 +2557,7 @@ function vGenel(){
    <div class="card"><h3>Son 30 gün</h3><div class="stats"><div class="stat"><b class="num">${r30}</b><span>sayfa okundu</span></div><div class="stat"><b class="num">${fmtMin(m30)}</b><span>süre</span></div><div class="stat"><b class="num">${streak()}</b><span>gün seri</span></div></div>
     <div class="ystack">${Object.entries(yolN).map(([y, n]) => `<span class="kind ${YOL[y][1]}">${YOL[y][0]}: ${n} s.</span>`).join(" ")}</div></div>
    <div class="card"><div class="row between"><h3>Son dinletmeler</h3><button class="small" data-act="dlnew2">+ Dinlettim</button></div>${vDlList(15)}</div>
-   <div class="card"><h3>Hatalar (${totE})</h3><div class="chips">${ERRK.map(([k, l]) => byK[k] ? `<span class="chip c-bad">${esc(l.split(" ")[0])} ${byK[k]}</span>` : "").join("")}</div>
+   <div class="card"><h3>Açık hatalar (${totE})${fixN ? ` <span class="small good-t">· ${fixN} düzeldi</span>` : ""}</h3><div class="chips">${ERRK.map(([k, l]) => byK[k] ? `<span class="chip c-bad">${esc(l.split(" ")[0])} ${byK[k]}</span>` : "").join("")}</div>
     ${topP.length ? topP.map(([p, L, n]) => `<details class="perr"><summary><span class="chip c-bad num">${n}</span> <b>s. ${p}</b> <span class="small muted">${esc(SN(ref(pStart(p))[0]))} · ${juzOfPage(p)}. cüz</span></summary>${L.slice(0, 12).map(e => `<div class="small">${errDetail(e)}</div>`).join("")}<button class="ghost small" data-open="${p}">Sayfayı aç</button></details>`).join("") : `<p class="small muted">Hata kaydı yok.</p>`}</div>
    ${risk.length ? `<div class="card"><h3>Unutulmaya yüz tutanlar</h3><p class="small">${risk.map(([p, k]) => `<button class="chip c-${k.r >= .8 ? "bad" : "warn"}" data-open="${p}">s. ${p}${k.days != null ? " · " + k.days + " gün" : ""}</button>`).join(" ")}</p></div>` : ""}
    <div class="row"><button class="ghost small" data-tab="takip">Ayrıntılı takip</button><button class="ghost small" data-tab="ist">İstatistik ve rozetler</button><button class="ghost small" data-tab="rapor">Hoca raporu</button></div></section>`;
@@ -2576,9 +2581,12 @@ function dlSave(o){
   const id = uid(), d = o.d || TODAY, f = Math.min(o.f, o.t), t = Math.max(o.f, o.t), who = (o.who || "").trim();
   const errIds = [];
   (o.errs || []).forEach(e => { if (e.id && S.err.some(x => x.id === e.id)) { errIds.push(e.id); return; }
-    const p = +e.p || f, i = e.i !== "" && e.i != null ? +e.i : -1, ne = { id: uid(), p, i, a: i >= 0 ? refStr(i) : "", k: e.k, r: e.r || "", cr: e.cr || "", c: 1, d, by: who, sid: id };
+    const p = +e.p || f, i = e.i !== "" && e.i != null ? +e.i : -1, ne = { id: uid(), p, i, a: i >= 0 ? refStr(i) : "", k: e.k, r: e.r || "", cr: e.cr || "", c: 1, d, by: who, sid: id, ctx: o.how === "kendi" ? "kendi" : "dinlet" };
     S.err.unshift(ne); errIds.push(ne.id); });
-  const E = S.err.filter(e => errIds.includes(e.id)), perP = {};
+  const E = S.err.filter(e => errIds.includes(e.id)), perP = {}, ctx = o.how === "kendi" ? "kendi" : "dinlet"; let fixedN = 0;
+  S.err.forEach(e => { if (e.fix || errIds.includes(e.id) || e.p < f || e.p > t || e.d > d) return; if (ctx === "kendi" && e.ctx === "dinlet") return;
+    const rep = E.some(n => n.p === e.p && (e.i >= 0 && n.i >= 0 ? n.i === e.i : n.k === e.k)); if (rep) { e.rep = (e.rep || 0) + 1; return; }
+    e.fix = d; e.fixBy = who || DLN[o.how] || ""; fixedN++; });
   E.forEach(e => { const q = perP[e.p] || (perP[e.p] = { n: 0, heavy: 0 }); q.n += e.c || 1; if (HEAVY[e.k]) q.heavy += e.c || 1; });
   const pages = []; for (let p = f; p <= t; p++) pages.push(p);
   pages.forEach(p => { const pg = S.pages[p] || (S.pages[p] = {}); pg.dl = d; const q = perP[p];
@@ -2596,7 +2604,7 @@ function dlSave(o){
   (S.dinlet = S.dinlet || []).unshift({ id, d, f, t, who, how: o.how || "", min: +o.min || 0, n: o.n || "", errs: errIds, rec: o.rec || "" });
   if (who) { S.lastWho = who; S.dlWho = S.dlWho || []; if (!S.dlWho.includes(who)) S.dlWho.push(who); } if (o.how) S.lastHow = o.how;
   mark("core", "pages", "err", "juz"); ui.lrDirty = true;
-  return { id, nErr: E.length, okPages: pages.filter(p => !perP[p]).length, pages: pages.length };
+  return { id, nErr: E.length, okPages: pages.filter(p => !perP[p]).length, pages: pages.length, fixedN };
 }
 function dlDelete(id){
   const s = (S.dinlet || []).find(x => x.id === id); if (!s) return;
@@ -2631,6 +2639,43 @@ function vDlList(n){
   return L.map(x => { const E = S.err.filter(e => x.errs.includes(e.id));
     return `<details class="perr"><summary><span class="chip ${E.length ? "c-warn" : "c-ok"}">${E.length ? E.length + " hata" : "Hatasız"}</span> <b>s. ${x.f}${x.t !== x.f ? "–" + x.t : ""}</b> <span class="small muted">${trD(x.d)} · ${esc(x.who || "—")}${x.how ? " · " + DLN[x.how] : ""}</span></summary>
      ${E.map(e => `<div class="small">${errDetail(e)}</div>`).join("")}${x.n ? `<div class="small gold">${esc(x.n)}</div>` : ""}<div class="row"><button class="ghost small" data-open="${x.f}">Sayfayı aç</button><button class="ghost small" data-dldel="${x.id}">Kaydı sil</button></div></details>`; }).join("");
+}
+
+/* ===== Cüz kapsamı: sayfa sayfa dinletme durumu ===== */
+function juzCov(j){
+  const [a, b] = juzPages(j), n = b - a + 1; let dl = 0; const c = { ok: 0, warn: 0, bad: 0 }, cells = [], got = { ok: [], warn: [], bad: [] }, none = [];
+  for (let p = a; p <= b; p++) { const pg = S.pages[p] || {}, s = pg.dl ? (pg.st || "ok") : "";
+    if (pg.dl) { dl++; c[s] = (c[s] || 0) + 1; (got[s] || (got[s] = [])).push(p); } else none.push(p);
+    cells.push(`<i class="s-${s || "none"}"></i>`); }
+  let color;
+  if (!dl) color = colorOf(lastLog(j));
+  else if (dl < n) color = "part";
+  else color = c.bad >= 3 || c.bad / n > .15 ? "bad" : (c.bad + c.warn) ? "warn" : "ok";
+  const desc = !dl ? (lastLog(j) ? "Sayfa ayrıntısı olmadan dinletilmiş" : "Ölçülmedi")
+    : [["ok", "sağlam"], ["warn", "orta"], ["bad", "zayıf"]].filter(([s]) => got[s].length).map(([s, l]) => `s. ${jRanges(got[s])} ${l}`).join(" · ") + (none.length ? ` · ${none.length} sayfa ölçülmedi (${jRanges(none)})` : "");
+  return { n, dl, c, color, bar: `<span class="jseg">${cells.join("")}</span>`, desc };
+}
+const CN2 = { ok: "Sağlam", warn: "Orta", bad: "Zayıf", none: "Ölçülmedi", part: "Kısmen" };
+
+/* ===== Hata: bağlam ve düzelme ===== */
+function errCtx(e){ return e.ctx === "dinlet" ? `<span class="chip c-gold">Dinletirken${e.by ? " · " + esc(e.by) : ""}</span>` : e.ctx === "kendi" ? `<span class="chip c-none">Kendim çalışırken</span>` : ""; }
+function errFix(e){ return e.fix ? `<span class="chip c-ok">Düzeldi · ${trD(e.fix)}${e.fixBy ? " · " + esc(e.fixBy) : ""}</span>` : e.rep ? `<span class="chip c-bad">${e.rep + 1}. kez tekrarlandı</span>` : ""; }
+function errShort(e){ return `s. ${e.p}${e.i >= 0 ? " " + ref(e.i).join(":") : ""} ${esc((ERRN[e.k] || e.k).split(" ")[0])}${e.r ? ` <span class="ar2" lang="ar">${esc(e.r)}</span>` : ""}`; }
+
+/* ===== Günün özeti ===== */
+const EVAL = [["iyi", "Sağlam"], ["orta", "Orta"], ["zor", "Zorlandım"]], MANA = [["net", "Netleşti"], ["kismen", "Kısmen"], ["yok", "Hayır"]];
+function vDaySum(d){
+  const x = S.days[d] || { done: {} }, rp = readPages(d), sess = (S.dinlet || []).filter(s => s.d === d), errs = S.err.filter(e => e.d === d), fixed = S.err.filter(e => e.fix === d);
+  const legacy = []; for (const j in S.juz) (S.juz[j].logs || []).forEach(l => { if (l.d === d && !l.sid) legacy.push([j, l]); });
+  const st = dayStatus(d), stl = { full: ["c-ok", "Tamam"], part: ["c-warn", "Yarım"], miss: ["c-bad", "Yapılmadı"], none: ["c-none", "Kayıt yok"] }[st] || ["c-none", ""];
+  const pick = (k, L, cur) => `<div class="qrow"><span class="small muted">${k === "ev" ? "Nasıldı?" : "Manalar kafanda netleşti mi?"}</span><div class="qseg">${L.map(([v, l]) => `<button class="${cur === v ? "on" : ""}" data-dq="${k}|${v}">${l}</button>`).join("")}</div></div>`;
+  return `<div class="card dsum"><div class="row between nowrap"><span><b>${d === TODAY ? "Bugün" : trDY(d)}</b> <span class="chip ${stl[0]}">${stl[1]}</span></span>${d <= TODAY ? `<button class="primary small" data-dlday="${d}">+ Dinlettim</button>` : ""}</div>
+   <div class="dstats"><span><b class="num">${rp}</b> sayfa</span><span><b class="num">${fmtMin(x.min || 0)}</b></span><span><b class="num">${sess.length + legacy.length}</b> dinletme</span><span><b class="num">${errs.length}</b> hata</span>${fixed.length ? `<span class="good-t"><b class="num">${fixed.length}</b> düzeldi</span>` : ""}</div>
+   ${sess.map(s => `<div class="dline"><span class="chip ${s.errs.length ? "c-warn" : "c-ok"}">${s.errs.length ? s.errs.length + " hata" : "Hatasız"}</span><span class="small">s. ${s.f}${s.t !== s.f ? "–" + s.t : ""} · ${esc(s.who || "—")}${s.how ? " · " + DLN[s.how] : ""}</span></div>`).join("")}
+   ${legacy.map(([j, l]) => `<div class="dline">${chip(colorOf(l))}<span class="small">${j}. cüz · ${l.h} hata · ${l.t} takılma${l.w ? " · " + esc(l.w) : ""}</span></div>`).join("")}
+   ${errs.length ? `<div class="dline wrap"><span class="small muted">Hatalar:</span><span class="small">${errs.slice(0, 5).map(e => (e.fix ? `<s>${errShort(e)}</s>` : errShort(e))).join(" · ")}${errs.length > 5 ? " …" : ""}</span></div>` : ""}
+   ${fixed.length ? `<div class="dline wrap"><span class="small good-t">Düzelen:</span><span class="small">${fixed.slice(0, 5).map(e => errShort(e) + ` <span class="muted">(${trD(e.d)})</span>`).join(" · ")}</span></div>` : ""}
+   ${pick("ev", EVAL, x.ev)}${pick("mana", MANA, x.mana)}</div>`;
 }
 
 /* ===== Kişisel ezber analizi ===== */
@@ -2968,17 +3013,17 @@ function vTakip(){
   if (ui.tSeg === "sayfa") return head + vSayfalar() + `</section>`;
   if (ui.tSeg === "hata") return head + vHatalar() + `</section>`;
   if (ui.tSeg === "hafta") return head + vHafta() + `</section>`;
-  const cnt = { ok: 0, warn: 0, bad: 0, none: 0 }; for (let j = 1; j <= 30; j++) cnt[colorOf(lastLog(j))]++;
+  const cnt = { ok: 0, warn: 0, bad: 0, none: 0, part: 0 }; for (let j = 1; j <= 30; j++) cnt[juzCov(j).color]++;
   const sel = ui.juzSel; let det = "";
   if (sel) { const logs = ((S.juz[sel] || {}).logs || []).slice().sort((a, b) => a.d < b.d ? 1 : -1), [a, b] = juzPages(sel);
-    det = `<div class="card" id="jdet"><div class="row between"><h2>${sel}. cüz</h2>${chip(colorOf(lastLog(sel)))}</div><div class="small muted">Sayfa ${a}–${b} · ${esc(refStr(JZ[sel - 1]))} ile başlar · ${mutCountJuz[sel]} müteşabih</div>
+    det = `<div class="card" id="jdet"><div class="row between"><h2>${sel}. cüz</h2><span class="chip c-${juzCov(sel).color}">${CN2[juzCov(sel).color]}</span></div><div class="small muted">Sayfa ${a}–${b} · ${esc(refStr(JZ[sel - 1]))} ile başlar · ${mutCountJuz[sel]} müteşabih</div><div class="jcov">${juzCov(sel).bar}<p class="small">${juzCov(sel).desc}</p></div>
      <form id="logform" class="col"><h3>Dinletme kaydı</h3><p class="small">Sayfa sayfa ve hata hata girmek için <button type="button" class="ghost small" data-dlopen="${juzPages(+ui.juzSel)[0]}-${juzPages(+ui.juzSel)[1]}">Ayrıntılı dinletme kaydı</button>. Aşağıdaki kısa form sadece sayı tutar; hatasız girersen cüzün sayfaları sağlam sayılır.</p><div class="grid2"><label>Tarih<input type="date" id="lg-d" value="${TODAY}"></label><label>Kime / nasıl<input id="lg-w" placeholder="Hoca, arkadaş, ses kaydı"></label>
      <label>Hata<input type="number" id="lg-h" min="0" value="0" inputmode="numeric"></label><label>Takılma / dürtülme<input type="number" id="lg-t" min="0" value="0" inputmode="numeric"></label>
      <label>Süre (dk)<input type="number" id="lg-m" min="0" inputmode="numeric" placeholder="35"></label><label>Zayıf sayfalar<input id="lg-p" placeholder="${a + 3}, ${a + 9}"></label></div>
      <label>Not<input id="lg-n"></label><p class="small muted">Yeşil: 0–2 hata ve takılma yok · Sarı: 3–6 hata ya da 1–2 takılma · Kırmızı: daha fazlası</p><button class="primary" type="submit">Kaydet</button></form>
      <h3>Geçmiş (${logs.length})</h3>${logs.map(l => `<div class="item"><div class="t"><b>${trDY(l.d)}</b> ${chip(colorOf(l))}<div class="small num">${l.h} hata · ${l.t} takılma${l.m ? " · " + l.m + " dk" : ""}${l.w ? " · " + esc(l.w) : ""}</div>${l.p ? `<div class="small muted">Zayıf: ${esc(l.p)}</div>` : ""}${l.n ? `<div class="small muted">${esc(l.n)}</div>` : ""}</div>${confirmBtn("log:" + sel + "|" + l.id)}</div>`).join("") || `<p class="empty">Henüz dinletme yok.</p>`}</div>`; }
-  return head + `<div class="stats"><div class="stat c-ok"><b>${cnt.ok}</b><span>Yeşil</span></div><div class="stat c-warn"><b>${cnt.warn}</b><span>Sarı</span></div><div class="stat c-bad"><b>${cnt.bad}</b><span>Kırmızı</span></div><div class="stat c-none"><b>${cnt.none}</b><span>Ölçülmedi</span></div></div>
-   <div class="juzgrid">${Array.from({ length: 30 }, (_, k) => { const j = k + 1, l = lastLog(j), c = colorOf(l); return `<button class="juz c-${c} ${sel === j ? "sel" : ""}" data-juz="${j}" aria-label="${j}. cüz ${CN[c]}"><b>${j}</b><span>${l ? l.h + "h·" + l.t + "t" : "—"}</span></button>`; }).join("")}</div>${det}</section>`;
+  return head + `<div class="stats"><div class="stat c-ok"><b>${cnt.ok}</b><span>Yeşil</span></div><div class="stat c-warn"><b>${cnt.warn}</b><span>Sarı</span></div><div class="stat c-bad"><b>${cnt.bad}</b><span>Kırmızı</span></div><div class="stat c-part"><b>${cnt.part}</b><span>Kısmen</span></div><div class="stat c-none"><b>${cnt.none}</b><span>Ölçülmedi</span></div></div>
+   <div class="juzgrid">${Array.from({ length: 30 }, (_, k) => { const j = k + 1, l = lastLog(j), cv = juzCov(j), c = cv.color; return `<button class="juz c-${c} ${sel === j ? "sel" : ""}" data-juz="${j}" aria-label="${j}. cüz ${CN2[c]}"><b>${j}</b>${cv.dl ? cv.bar + `<span>${cv.dl}/${cv.n}</span>` : `<span>${l ? l.h + "h·" + l.t + "t" : "—"}</span>`}</button>`; }).join("")}</div>${det}</section>`;
 }
 function vSayfalar(){
   const f = ui.pgF, rd = pageReads(); let mx = 1; Object.values(rd).forEach(v => mx = Math.max(mx, v));
@@ -3215,6 +3260,9 @@ document.addEventListener("click", e => {
   if (a.mline) { const L = ui.lineRev || (ui.lineRev = {}); L[a.mline] = !L[a.mline]; return render(); }
   if (a.lwk) { ui.lwK = a.lwk; return render(); }
   if (a.sil) { ui.silLv = Math.max(1, Math.min(5, (+(ui.silLv || 2)) + (+a.sil))); ui.lineRev = {}; return render(); }
+  if (a.juzgo) { ui.tSeg = "cuz"; ui.juzSel = +a.juzgo; return go("takip"); }
+  if (a.dlday) { dlOpen(); ui.dl.d = a.dlday; if (ui.tab !== "bugun" && a.dlday === TODAY) return go("bugun"); render(); const el = $("#dlform"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  if (a.dq) { const [k, v] = a.dq.split("|"), d = ui.tab === "bugun" ? TODAY : ui.day, x = dayRec(d); x[k] = x[k] === v ? "" : v; markDay(d); return render(); }
   if (a.sp) { sepetTap(+a.sp); return render(); }
   if (a.sj) { const [x, y] = juzPages(+a.sj), br = ui.brush ?? "ok"; for (let p = x; p <= y; p++) setPst(p, br); mark("pages"); toast(a.sj + ". cüz: " + PST[br]); return render(); }
   if (a.brush != null) { ui.brush = a.brush; ui.rangeA = null; return render(); }
@@ -3285,7 +3333,7 @@ document.addEventListener("click", e => {
     dlnew2(){ dlOpen(); go("bugun"); return true; },
     dlclose(){ ui.dl = null; },
     dlerradd(){ const D = ui.dl, ek = D.ek; D.errs.push({ k: ek.k, p: +ek.p || D.f, i: ek.i, r: (ek.r || "").trim(), cr: (ek.cr || "").trim() }); ek.r = ""; ek.cr = ""; ek.i = ""; },
-    dlsave(){ const D = ui.dl; if (!D || !(+D.f)) return true; const r = dlSave(D); ui.dl = null; toast(r.nErr ? r.pages + " sayfa işlendi · " + r.nErr + " hata deftere yazıldı · " + r.okPages + " sayfa sağlam" : r.pages + " sayfa sağlam dinletildi"); },
+    dlsave(){ const D = ui.dl; if (!D || !(+D.f)) return true; const r = dlSave(D); ui.dl = null; toast((r.nErr ? r.pages + " sayfa işlendi · " + r.nErr + " hata deftere yazıldı · " + r.okPages + " sayfa sağlam" : r.pages + " sayfa sağlam dinletildi") + (r.fixedN ? " · " + r.fixedN + " eski hata düzeldi" : "")); },
     pnadd(){ const p = Math.max(1, Math.min(604, +($("#pn-p") || {}).value || 0)), n = (($("#pn-t") || {}).value || "").trim(); if (!p || !n) { toast("Sayfa ve not yaz"); return true; } const pg = S.pages[p] || (S.pages[p] = {}); pg.n = n; mark("pages"); toast("s. " + p + " notu kaydedildi"); },
     sreadrange(){ const f = Math.max(1, Math.min(604, +($("#sr-f") || {}).value || 0)), t = Math.max(1, Math.min(604, +($("#sr-t") || {}).value || f)); if (!f) return true; const L = []; for (let p = Math.min(f, t); p <= Math.max(f, t); p++) L.push(p); addRead(L); ui.lastRead = L; toast(L.length + " sayfa bugün okundu olarak işlendi"); },
     sreadundo(){ if (ui.lastRead) { delRead(ui.lastRead); ui.lastRead = null; } else toast("Geri alınacak bir şey yok"); },
@@ -3314,6 +3362,7 @@ document.addEventListener("click", e => {
   };
   if (A[act] && !A[act]()) render();
 });
+document.addEventListener("toggle", e => { const el = e.target; if (el && el.classList && el.classList.contains("dmore")) ui.dmore = el.open; }, true);
 document.addEventListener("change", e => {
   const t = e.target, a = t.dataset, id = t.id;
   if (a.part) { const d = ui.tab === "bugun" ? TODAY : ui.day, x = dayRec(d); x.done[a.part] = t.checked; { const pt0 = partsFor(d).parts.find(q => partKey(q) === a.part); if (pt0 && pt0.yol === "dinlet" && t.checked && !(S.dinlet || []).some(z => z.d === d && z.f <= pt0.f && z.t >= pt0.t)) { dlSave({ d, f: pt0.f, t: pt0.t, who: S.lastWho || "", how: S.lastHow || "yuz", errs: [] }); toast("Hatasız dinletildi sayıldı; hata olduysa \"+ Dinlettim\" ile ayrıntı gir"); } } if (d <= TODAY) { const pf = partsFor(d); const wasDyn = x.snap && x.snap.dyn; x.snap = { parts: pf.parts, info: pf.info, pk: planPK(), dyn: wasDyn };
