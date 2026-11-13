@@ -580,7 +580,7 @@ details.tur{padding:8px 0;border-bottom:1px solid var(--line)}details.tur:last-o
 .gcs{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 2px}
 .gc{min-width:40px;min-height:34px;padding:2px 6px;font-size:13px;font-weight:600;border-radius:8px;background:var(--card);border:1.5px solid var(--line);color:var(--fg);font-variant-numeric:tabular-nums}
 .gc.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.gc.ex{border-style:dashed}
+.gc.ex{border-style:dashed}.gc.ed{border-color:#c0392b;color:#c0392b;background:var(--card)}
 .gc.dl-ok{box-shadow:inset 0 -4px 0 #c9a227}.gc.dl-bad{box-shadow:inset 0 -4px 0 #c0392b}
 .gses{margin:6px 0}
 .csform h3{margin:0}.ppr input{width:80px}
@@ -2480,7 +2480,20 @@ function vPageRecs(p){
 const sepetOn = d => S.mode === "sepet" && (!S.modeFrom || (d || TODAY) >= S.modeFrom);
 const PST = { ok: "Sağlam", warn: "Orta", bad: "Zayıf", "": "İşaretsiz" };
 function pst(p){ return (S.pages[p] && S.pages[p].st) || ""; }
-function setPst(p, v){ const pg = S.pages[p] || (S.pages[p] = {}); if (v) pg.st = v; else delete pg.st; }
+function setPst(p, v){ const pg = S.pages[p] || (S.pages[p] = {}); if (v) pg.st = v; else { delete pg.st; delete pg.dl; pageUnDay(p, TODAY); } }
+/* sayfayı o günün kayıtlarından çıkar: okunanlar, hedef, çalışma, namaz, kenardaki dinletme */
+function pageUnDay(p, d){
+  const x = S.days[d]; let ch = false;
+  if (x) { ["read", "hedef", "namaz"].forEach(k => { if (x[k] && x[k].includes(p)) { x[k] = x[k].filter(q => q !== p); ch = true; } }); if (x.hedef && !x.hedef.length) delete x.hedef;
+    if (x.ses) x.ses = x.ses.filter(s => { if (!s.p.includes(p)) return true; ch = true; s.p = s.p.filter(q => q !== p); if (s.p.length) return true; x.min = Math.max(0, (x.min || 0) - (s.min || 0)); return false; }); }
+  (S.dinlet || []).filter(s => s.d === d && p >= s.f && p <= s.t).forEach(s => { ch = true;
+    if (s.f === s.t) { dlUndo(s.id); return; }
+    if (s.f === p) s.f++; else if (s.t === p) s.t--; else return;
+    S.err.filter(e => s.errs.includes(e.id) && e.p === p).forEach(e => { s.errs = s.errs.filter(z => z !== e.id); S.err = S.err.filter(z => z.id !== e.id); });
+    for (const j in S.juz) (S.juz[j].logs || []).forEach(l => { if (l.sid === s.id) l.p = "s. " + PR(s.f, s.t); }); });
+  if (ch) { markDay(d); mark("core", "err", "juz"); ui.lrDirty = true; }
+  return ch;
+}
 function rangesOf(L){ const out = []; L.slice().sort((a, b) => a - b).forEach(p => { const r = out[out.length - 1]; if (r && p === r[1] + 1) r[1] = p; else out.push([p, p]); }); return out; }
 const rangeTxt = R => R.map(([a, b]) => PR(a, b)).join(", ");
 function sepetCounts(){ const c = { ok: 0, warn: 0, bad: 0, "": 0 }; for (let p = 1; p <= 604; p++) c[pst(p)]++; return c; }
@@ -3164,7 +3177,7 @@ function vGunCard(d){
   const x = S.days[d] || {}, H = hedefOf(d), rd = new Set(x.read || []), plan = planPagesOf(d), dl = {}, today = d === TODAY;
   (S.dinlet || []).filter(s => s.d === d).forEach(s => { const ep = new Set(S.err.filter(e => s.errs.includes(e.id)).map(e => e.p)); for (let p = s.f; p <= s.t; p++) dl[p] = ep.has(p) ? "bad" : (dl[p] || "ok"); });
   const extra = [...rd].filter(p => !H.includes(p)).sort((a, b) => a - b), all = H.concat(extra);
-  const chip = p => `<button class="gc ${rd.has(p) ? "on" : ""} ${dl[p] ? "dl-" + dl[p] : ""} ${H.includes(p) ? "" : "ex"}" data-rdtog="${p}" aria-pressed="${rd.has(p)}" title="${rd.has(p) ? "Çalışıldı" : "Çalışılmadı"}${dl[p] ? " · dinletildi" : ""}">${PN(p)}</button>`;
+  const ed = ui.gcEdit === d, chip = p => `<button class="gc ${rd.has(p) ? "on" : ""} ${dl[p] ? "dl-" + dl[p] : ""} ${H.includes(p) ? "" : "ex"} ${ed ? "ed" : ""}" ${ed ? `data-gcrm="${d}|${p}"` : `data-rdtog="${p}"`} aria-pressed="${rd.has(p)}" title="${rd.has(p) ? "Çalışıldı" : "Çalışılmadı"}${dl[p] ? " · dinletildi" : ""}">${PN(p)}${ed ? " ×" : ""}</button>`;
   const doneN = H.filter(p => rd.has(p)).length, dlN = Object.keys(dl).length, ses = x.ses || [];
   let ay = 0; H.forEach(p => ay += pEnd(p) - pStart(p) + 1);
   const head = H.length ? `<div class="gch"><span><b>Hedef</b> <span class="small">s. ${esc(rangeTxt(rangesOf(H)))}</span> <span class="small muted">· ${pgCount(H)} sayfa · ${ay} ayet${plan.size && (x.hedef || []).length ? " · program + kendi" : plan.size ? " · programdan" : ""}</span></span></div>
@@ -3173,7 +3186,7 @@ function vGunCard(d){
     : `<p class="small muted">${sepetOn(d) ? "Hedef koymadın. İstersen sabahtan sayfalarını seç, istersen sadece çalıştıklarını işaretle." : "Bugüne düşen program sayfası yok."}</p>`;
   return `<div class="card gun"><div class="row between nowrap"><h3>Çalışma</h3><span class="row nowrap"><button class="ghost small" data-hpopen="${d}">${(x.hedef || []).length ? "Hedefi düzenle" : "Hedef koy"}</button>${H.length || rd.size ? `<button class="ghost small" data-act="tmopen">Harita</button>` : ""}</span></div>
    ${head}
-   ${all.length ? `<details class="gcd" ${all.length <= 20 || ui.gcOpen ? "open" : ""}><summary class="small">Sayfalar (${pgCount(all)}) · dokun = çalıştım ✓</summary><div class="gcs">${all.map(chip).join("")}</div><p class="tiny">Alt çizgi: dinletildi (kırmızı: hatalı) · kesik kenar: hedef dışı.</p></details>` : ""}
+   ${all.length ? `<details class="gcd" ${all.length <= 20 || ui.gcOpen ? "open" : ""}><summary class="small">Sayfalar (${pgCount(all)}) · ${ed ? "dokun = bugünden çıkar" : "dokun = çalıştım ✓"}</summary><div class="gcs">${all.map(chip).join("")}</div><div class="row between nowrap"><p class="tiny">${ed ? "Çıkardığın sayfa bu günün okumalarından, hedefinden, çalışma kaydından ve (kenardaysa) dinletmesinden silinir." : "Alt çizgi: dinletildi (kırmızı: hatalı) · kesik kenar: hedef dışı."}</p><button class="ghost small" data-gced="${d}">${ed ? "Bitti" : "Sayfaları düzenle"}</button></div></details>` : ""}
    ${ses.length ? `<div class="gses">${ses.map(s => `<div class="dline"><span class="num small">${esc(s.t || "")}</span><span class="small" style="flex:1">s. ${esc(rangeTxt(rangesOf(s.p)))} · <b>${fmtMin(s.min || 0)}</b>${s.n ? " · " + esc(s.n) : ""}</span><button class="ghost small" data-csedit="${d}|${s.id}">Düzenle</button>${confirmBtn("cs:" + d + "|" + s.id)}</div>`).join("")}</div>` : ""}
    <div class="row"><button class="primary small" data-csopen="${d}">+ Çalıştım</button><button class="small" data-dlday="${d}">+ Dinlettim</button></div></div>`;
 }
@@ -3781,6 +3794,8 @@ document.addEventListener("click", e => {
   if (a.hpopen) { const x = S.days[a.hpopen] || {}; ui.hp = { d: a.hpopen, P: [...(x.hedef || [])] }; ui.cs = null; ui.ppJ = null; return render(); }
   if (a.csopen) { const d = a.csopen, rd = new Set((S.days[d] || {}).read || []); ui.cs = { d, P: hedefOf(d).filter(p => !rd.has(p)), min: "", t: nowHM(), n: "" }; ui.hp = null; ui.ppJ = null; return render(); }
   if (a.csedit) { const [d, id] = a.csedit.split("|"), s = ((S.days[d] || {}).ses || []).find(z => z.id === id); if (s) { ui.cs = { d, id, P: s.p.slice(), min: s.min, t: s.t, n: s.n }; ui.hp = null; ui.ppJ = null; } return render(); }
+  if (a.gced) { ui.gcEdit = ui.gcEdit === a.gced ? null : a.gced; ui.gcOpen = true; return render(); }
+  if (a.gcrm) { const [d, p] = a.gcrm.split("|"), q = +p; if (planPagesOf(d).has(q) && !((S.days[d] || {}).read || []).includes(q)) { toast("Bu sayfa programdan geliyor; programı değiştirmeden çıkmaz"); return; } pageUnDay(q, d); toast("s. " + PN(q) + " bu günden çıkarıldı"); return render(); }
   if (a.rdtog) { const p = +a.rdtog, d = ui.tab === "bugun" ? TODAY : ui.day, x = dayRec(d); x.read = x.read || []; if (x.read.includes(p)) x.read = x.read.filter(q => q !== p); else { x.read.push(p); syncParts(d); } ui.spickOpen = true; ui.lrDirty = true; markDay(d); return render(); }
   if (a.rdrm) { const [f2, t2] = a.rdrm.split("-").map(Number), d = ui.tab === "bugun" ? TODAY : ui.day, x = S.days[d]; if (x && x.read) { x.read = x.read.filter(q => q < f2 || q > t2); markDay(d); } return render(); }
   if (a.erredit) { ui.errEdit = a.erredit; ui.errEditP = null; ui.errDraft = null; return render(); }
