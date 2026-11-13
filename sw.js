@@ -1,6 +1,6 @@
 /* Hıfz Defteri: çevrimdışı çalışma. Uygulama ilk açılışta telefona kaydedilir;
    sonraki açılışlar internetsiz olur, internet varsa yeni sürüm arka planda iner. */
-const CACHE = "hifz-v27";
+const CACHE = "hifz-v29";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
