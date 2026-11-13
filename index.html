@@ -599,6 +599,22 @@ details.tur{padding:8px 0;border-bottom:1px solid var(--line)}details.tur:last-o
 .lay-harita .tmsur,.lay-yan .tmsur{font-size:calc(11px * var(--tmz));padding:3px 0 1px}
 
 .dlpre{flex-wrap:wrap;overflow:visible}.fchip.on .muted{color:inherit;opacity:.8}
+.tmoz{column-width:calc(118px * var(--tmz));column-gap:6px;margin-bottom:8px}
+.oz-p{break-inside:avoid;display:inline-block;width:100%;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:3px 4px 4px;margin:0 0 6px;font-size:calc(11px * var(--tmz));line-height:1.25}
+.oz-p.c-ok{border-top:3px solid var(--good,#2f7d4f)}.oz-p.c-warn{border-top:3px solid #c9a227}.oz-p.c-bad{border-top:3px solid #c0392b}
+.oz-h{display:flex;justify-content:space-between;align-items:baseline;gap:4px;cursor:pointer;border-bottom:1px solid var(--line);padding-bottom:2px;margin-bottom:1px}
+.oz-h b{font-size:calc(14px * var(--tmz));color:var(--accent)}.oz-h span{color:var(--muted);font-size:calc(9.5px * var(--tmz))}
+.oz-s{font-weight:700;color:var(--accent);font-size:calc(10px * var(--tmz));padding:2px 0 0}
+.oz-l{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:0 3px;width:100%;min-height:0;padding:1px 0;border:0;border-radius:0;background:transparent;font-weight:400;text-align:left;color:var(--fg);font-size:inherit;line-height:1.2}
+.oz-l.gs{border-top:1.5px solid var(--accent)}
+.oz-l b{font-size:calc(9.5px * var(--tmz));color:var(--muted);min-width:1.6em}
+.oz-l i{font-style:normal;font-size:calc(8px * var(--tmz));background:var(--accent);color:var(--on-accent);border-radius:6px;padding:0 3px}
+.oz-l>i:empty{visibility:hidden;padding:0}
+.oz-l .ar{font-family:var(--quran);font-size:calc(14px * var(--tmz));line-height:1.45;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.oz-l em{font-style:normal;font-size:.8em;margin-right:2px}
+.oz-l small{grid-column:1 / -1;font-size:calc(8.5px * var(--tmz));color:var(--muted);line-height:1.15;padding-bottom:1px}
+.oz-e{font-family:var(--quran);font-size:calc(12px * var(--tmz));color:var(--muted);text-align:right;border-top:1px dashed var(--line);margin-top:1px}
+
 @media (max-width:430px){.grid3{grid-template-columns:1fr 1fr}.methods{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.stats.s3{grid-template-columns:repeat(3,1fr)}.juzgrid{grid-template-columns:repeat(5,1fr)}}
 @media (max-width:360px){.grid2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
@@ -3118,7 +3134,7 @@ function vTmap(){
    <div class="card"><div class="chips">${chips}</div>
     ${T.k === "ozel" ? `<div class="grid3"><label>Sayfadan<input type="number" id="tm-f" min="0" max="603" value="${PN(T.f)}" inputmode="numeric"></label><label>Sayfaya<input type="number" id="tm-t" min="0" max="603" value="${PN(T.t)}" inputmode="numeric"></label><label>&nbsp;<button class="small" data-act="tmhedef">Bugünkü hedefim yap</button></label></div>` : ""}
     ${T.k === "hedef" ? `<button class="ghost small" data-act="tmhedefsil">Hedefi kaldır</button>` : ""}
-    <div class="row between nowrap"><span class="small muted">Görünüm</span>${seg("tmLay", [["alt", "Alt alta"], ["yan", "Yan yana"], ["harita", "Harita"]], ui.tmLay || "alt")}</div>
+    <div class="row between nowrap"><span class="small muted">Görünüm</span>${seg("tmLay", [["alt", "Alt alta"], ["yan", "Yan yana"], ["harita", "Harita"], ["ozet", "Tek bakış"]], ui.tmLay || "alt")}</div>
     <div class="row between nowrap"><span class="small muted">Meal</span>${seg("tmMeal", [["kisa", "Kısa"], ["tam", "Tam"], ["yok", "Kapalı"]], ui.tmMeal || "kisa")}</div>
     ${(ui.tmLay || "alt") !== "alt" ? `<div class="row between nowrap"><span class="small muted">Yakınlık</span><span class="row nowrap"><button class="ghost small" data-tmz="-1" aria-label="Küçült">−</button><span class="small num">%${Math.round((ui.tmZ || 1) * 100)}</span><button class="ghost small" data-tmz="1" aria-label="Büyüt">+</button></span></div>` : ""}</div>
    <div class="card tmsum"><div class="dstats"><span><b class="num">${pgCount(P)}</b> sayfa</span><span><b class="num">${ids.length}</b> ayet</span><span><b class="num">${sur.length}</b> sure parçası</span><span><b class="num">${M.inn.length + M.out.length}</b> müteşabih</span></div>
@@ -3126,7 +3142,7 @@ function vTmap(){
     <p class="small muted">Başlangıç ${esc(refStr(ids[0]))} · bitiş ${esc(refStr(ids[ids.length - 1]))}${over ? ` · ilk ${TM_MAX} sayfa gösteriliyor` : ""}</p>
     <h4>Sayfa sayfa ayet sayısı</h4><div class="tmseq">${P.map(p => `<button class="tmsq c-${pst(p) || "none"}" data-open="${p}"><b class="num">${PN(p)}</b><span class="num">${pEnd(p) - pStart(p) + 1}</span></button>`).join("")}</div>
     <details class="dmore"><summary class="small">Sayfa başları ve geçişler (${P.length})</summary><ol class="tmheads">${P.map(p => `<li><button class="tmay" data-goayah="${pStart(p)}"><span class="tmn"><b class="num">${PN(p)}</b></span><span class="t"><span class="ar cw" dir="rtl" lang="ar">${esc(firstWords(pStart(p), 4))} …</span><span class="tiny muted">${esc(refStr(pStart(p)))} → biter: <span lang="ar" class="ar2">… ${esc(lastWords(pEnd(p), 2))}</span></span></span></button></li>`).join("")}</ol></details></div>
-   ${(ui.tmLay || "alt") === "yan" ? `<p class="tiny muted">Sağdan sola kaydır, mushaf gibi. Sayfaya dokununca açılır.</p>` : ""}<div class="tmgrid lay-${ui.tmLay || "alt"}" style="--tmz:${ui.tmZ || 1}" ${(ui.tmLay || "alt") === "yan" ? 'dir="rtl"' : ""}>${P.map((p, k) => tmPageCard(p, M, ui.tmMeal || "kisa", k === P.length - 1)).join("")}</div>
+   ${(ui.tmLay || "alt") === "yan" ? `<p class="tiny muted">Sağdan sola kaydır, mushaf gibi. Sayfaya dokununca açılır.</p>` : ""}<div class="tmgrid lay-${ui.tmLay || "alt"}" style="--tmz:${ui.tmZ || 1}" ${(ui.tmLay || "alt") === "yan" ? 'dir="rtl"' : ""}>${ui.tmLay === "ozet" ? "" : P.map((p, k) => tmPageCard(p, M, ui.tmMeal || "kisa", k === P.length - 1)).join("")}</div>${ui.tmLay === "ozet" ? tmOzet(P, M) : ""}
    <div class="card"><h3>Müteşabihler</h3>
     <h4>Bu sayfaların kendi içinde (${M.inn.length})</h4>${M.inn.length ? M.inn.map(tmPairRow).join("") : `<p class="small muted">Seçili sayfalar arasında birbirine benzeyen ayet kaydı yok.</p>`}
     <h4>Başka yerlerle (${M.out.length})</h4>${M.out.length ? M.out.slice(0, T.mall ? 999 : 25).map(tmPairRow).join("") + (M.out.length > 25 && !T.mall ? `<button class="ghost small" data-act="tmmall">Hepsini göster (${M.out.length})</button>` : "") : `<p class="small muted">Başka yerle kayıtlı benzerlik yok.</p>`}
@@ -3135,6 +3151,14 @@ function vTmap(){
     <textarea id="tm-kod" rows="4" placeholder="Örn. 22–31: 4·5·6… / yahudiler→kıble→hac…">${esc(T.kod != null ? T.kod : lastKod ? lastKod.txt : P.map(p => PN(p) + ":" + pageCode(p).groups.map(g => g.length).join("+")).join("  "))}</textarea>
     <button class="primary small" data-act="tmkod">Kodlamamı kaydet</button>${lastKod ? `<span class="tiny muted"> Son kayıt ${trD(lastKod.d)}</span>` : ""}</div>
   </section>`;
+}
+function tmOzet(P, M){
+  const meal = ui.tmMeal || "kisa", gist = t => { const w = (t || "").replace(/\s+/g, " ").trim().split(" "); return w.slice(0, meal === "tam" ? 9 : 5).join(" ") + (w.length > (meal === "tam" ? 9 : 5) ? "…" : ""); };
+  return `<div class="tmoz" style="--tmz:${ui.tmZ || 1}">${P.map(p => { const a = pStart(p), b = pEnd(p), c = pageCode(p), gs = new Map(); c.groups.forEach((g, k) => gs.set(g[0], k + 1));
+    const rows = range(a, b).map(i => { const [s, ay] = ref(i), mk = M.at.get(i), g = gs.get(i);
+      return `${ay === 1 ? `<div class="oz-s">${esc(SN(s))}</div>` : ""}<button class="oz-l ${g && g > 1 ? "gs" : ""}" data-goayah="${i}"><b class="num">${ay}</b><i class="num">${g || ""}</i><span class="ar" dir="rtl" lang="ar">${esc(firstWords(i, 3))}${mk ? `<em class="${mk === "i" ? "danger" : "gold"}">≈</em>` : ""}</span>${meal !== "yok" && TXT ? `<small>${esc(gist(TRM(i)))}</small>` : ""}</button>`; }).join("");
+    return `<div class="oz-p c-${pst(p) || "none"}"><div class="oz-h" data-open="${p}"><b class="num">${PN(p)}</b><span>${b - a + 1} ayet · ${c.groups.map(g => g.length).join("+")}</span></div>${rows}<div class="oz-e" dir="rtl" lang="ar">… ${esc(lastWords(b, 2))}</div></div>`; }).join("")}</div>
+   <p class="tiny muted">Her sütun bir sayfa: ayet no, kodlama grubu (yeşil numara), ilk kelimeler, en altta sayfanın son kelimeleri. ≈ müteşabih. − / + ile sığdır.</p>`;
 }
 function vTmEntry(){
   const src = tmSources(), s = src[0];
