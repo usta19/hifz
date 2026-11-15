@@ -618,6 +618,13 @@ details.tur{padding:8px 0;border-bottom:1px solid var(--line)}details.tur:last-o
 .dbrows{margin:8px 0 4px}.dbr{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;padding:4px 0;border-bottom:1px dashed var(--line)}
 .dbr.has b{color:#c0392b}.dbhead{border:0;padding:0}.stp{display:inline-flex;align-items:center;gap:2px}.stp button{min-width:30px;min-height:30px;padding:0}.stp b{min-width:1.4em;text-align:center}
 
+.rsel{margin:4px 0}.rsm{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}.rsm button{min-height:32px;padding:3px 10px;font-size:13px;border-radius:16px;background:var(--card);border:1px solid var(--line);color:var(--fg);font-weight:600}
+.rsm button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.rsj{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}.rsjc{min-height:32px;padding:0;font-size:13px;font-weight:600;background:var(--card);border:1.5px solid var(--line);color:var(--fg)}
+.rsjc.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}.rsjc.part{border-color:var(--accent);border-style:dashed}
+.rsp{display:inline-flex;align-items:center;gap:2px}.rspa{min-width:30px;min-height:30px;padding:0;border-radius:15px;font-weight:700;background:var(--card);border:1px solid var(--line);color:var(--accent)}.rspa.on{background:var(--accent);color:var(--on-accent)}
+.pcdl{float:right;margin-left:6px}#db-s{flex:1;min-width:0}
+
 @media (max-width:430px){.grid3{grid-template-columns:1fr 1fr}.methods{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.stats.s3{grid-template-columns:repeat(3,1fr)}.juzgrid{grid-template-columns:repeat(5,1fr)}}
 @media (max-width:360px){.grid2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
@@ -1773,7 +1780,7 @@ function vDinle(){
     return `<div class="reccard ${r.g ? "g-" + r.g : ""} ${playing ? "playing" : ""}">
      <div class="rc-top">${selMode ? `<input type="checkbox" class="rcchk" data-recsel="${r.id}" ${sel[r.id] ? "checked" : ""} aria-label="Seç">` : ""}
       <button class="rc-main" data-recopen="${r.id}"><b>${esc(recLabel(r))}</b><span class="small muted">${esc(SN(ref(pStart(r.p))[0]))} · ${juzOfPage(r.p)}. cüz · ${trDY(r.d)}${r.t ? " " + r.t : ""}${r.dur ? " · " + fmtSec(r.dur) : ""}${r.video ? " · video" : ""}</span>
-       <span class="row rc-chips">${r.who && r.who !== "Ben" ? `<span class="chip c-gold">${esc(r.who)}</span>` : ""}${r.cloudOnly ? `<span class="chip c-none">☁ Yalnızca bulutta</span>` : r.cloud ? `<span class="chip c-ok">☁ Yedekli</span>` : ""}${r.ref ? `<span class="chip c-gold">Referans</span>` : ""}${r.g ? `<span class="chip c-${r.g}">${GRADE[r.g]}</span>` : `<span class="chip c-none">Değerlendirilmedi</span>`}${E.length ? Object.entries(byK).map(([k, n]) => `<span class="chip c-bad">${esc((ERRN[k] || k).split(" ")[0])} ${n}</span>`).join("") : `<span class="chip c-ok">Hata işaretlenmedi</span>`}</span></button>
+       <span class="row rc-chips">${(r.p2 || r.p) > r.p ? `<span class="chip c-none">Toplu · ${pgCount(range(r.p, r.p2))} sayfa</span>` : ""}${r.who && r.who !== "Ben" ? `<span class="chip c-gold">${esc(r.who)}</span>` : ""}${r.cloudOnly ? `<span class="chip c-none">☁ Yalnızca bulutta</span>` : r.cloud ? `<span class="chip c-ok">☁ Yedekli</span>` : ""}${r.ref ? `<span class="chip c-gold">Referans</span>` : ""}${r.g ? `<span class="chip c-${r.g}">${GRADE[r.g]}</span>` : `<span class="chip c-none">Değerlendirilmedi</span>`}${E.length ? Object.entries(byK).map(([k, n]) => `<span class="chip c-bad">${esc((ERRN[k] || k).split(" ")[0])} ${n}</span>`).join("") : `<span class="chip c-ok">Hata işaretlenmedi</span>`}</span></button>
       <button class="playbtn ${playing ? "on" : ""}" data-recplay="${r.id}" aria-label="Dinle">${playing ? "♪" : "▶"}</button></div>
      ${open ? `<div class="rc-det">
        <div class="seg">${Object.entries(GRADE).map(([g, l]) => `<button class="${r.g === g ? "on" : ""}" data-recgrade="${r.id}|${g}">${l}</button>`).join("")}<button class="${!r.g ? "on" : ""}" data-recgrade="${r.id}|">—</button></div>
@@ -2500,7 +2507,7 @@ function vPageRecs(p){
   oth.forEach(r => (G[r.who] = G[r.who] || []).push(r));
   const item = r => { const E = recErrs(r), on = AUDIO && AUDIO.id === r.id;
     return `<div class="prec ${on ? "on" : ""}"><button class="playbtn ${on ? "on" : ""}" data-recplay="${r.id}" aria-label="Dinle">${on ? "♪" : "▶"}</button>
-     <div class="t"><b>${esc(recTitle(r))}</b><span class="tiny">${r.who && r.who !== "Ben" ? esc(r.who) + " · " : ""}${trDY(r.d)}${r.t ? " " + r.t : ""}${r.dur ? " · " + fmtSec(r.dur) : ""}${r.video ? " · video" : ""}${r.g ? ` · <span class="c-${r.g}t">${GRADE[r.g]}</span>` : ""}</span>
+     <div class="t"><b>${esc(recTitle(r))}</b><span class="tiny">${(r.p2 || r.p) > r.p ? `<b>Toplu s. ${PR(r.p, r.p2)}</b> · ` : ""}${r.who && r.who !== "Ben" ? esc(r.who) + " · " : ""}${trDY(r.d)}${r.t ? " " + r.t : ""}${r.dur ? " · " + fmtSec(r.dur) : ""}${r.video ? " · video" : ""}${r.g ? ` · <span class="c-${r.g}t">${GRADE[r.g]}</span>` : ""}</span>
       ${r.n ? `<span class="small">${esc(r.n)}</span>` : ""}
       ${E.length ? `<span class="tiny perr">${E.length} hata: ${E.slice(0, 3).map(o => esc((o.e.i >= 0 ? ref(o.e.i).join(":") + " " : "") + ((ERRN[o.e.k] || o.e.k).split(" ")[0]) + (o.e.r ? " «" + o.e.r + "»" : ""))).join(" · ")}${E.length > 3 ? " …" : ""}</span>` : ""}</div>
      <button class="ghost small" data-recgo="${r.id}">Ayrıntı</button></div>`; };
@@ -2732,7 +2739,8 @@ function dlDelete(id){
 function ayahOpts(p, cur){ return `<option value="">Ayet (isteğe bağlı)</option>` + range(pStart(p), pEnd(p)).map(i => opt(i, refStr(i) + (TXT ? " · " + AR(i).split(" ").slice(0, 3).join(" ") : ""), cur)).join(""); }
 function vDlForm(){
   const D = ui.dl; if (!D) return "";
-  if (!D.P) D.P = D.editId ? range(Math.min(D.f, D.t), Math.max(D.f, D.t)) : dlDefaultP(D.d || TODAY, [D.f, D.t]);
+  if (!D.P) { D.P = D.editId ? range(Math.min(D.f, D.t), Math.max(D.f, D.t)) : dlDefaultP(D.d || TODAY, [D.f, D.t]); if (!D.sm) D.sm = D.editId ? rsGuess(D.P) : (hedefOf(D.d || TODAY).length || dayReadSet(D.d || TODAY).size ? "hedef" : rsGuess(D.P)); }
+  else if (!D.sm) D.sm = rsGuess(D.P);
   const ek = D.ek, pg = D.P.includes(+ek.p) ? +ek.p : (D.P[0] || D.f);
   const errRow = (e, k) => `<div class="dlerr"><span class="chip c-bad">${esc((ERRN[e.k] || e.k).split(" ")[0])}</span><span class="small">s. ${PN(e.p)}${e.i !== "" && e.i != null ? " · " + esc(refStr(+e.i)) : ""}${e.r ? ` · <span class="ar2" lang="ar">${esc(e.r)}</span>` : ""}${e.cr ? " → " + esc(e.cr) : ""}</span><button class="ghost small" data-dlerrdel="${k}" aria-label="Hatayı sil">×</button></div>`;
   if (!D.rows) D.rows = [];
@@ -2740,7 +2748,7 @@ function vDlForm(){
   if (ui.dlMode === "toplu" && !D.editId) return head + vDlBulk(D) + `</div>`;
   return `${head}
    ${!D.editId && dlJoinOpts(D).length ? `<label class="small">Mevcut bir dinletmeye ekle<select id="dl-join"><option value="">— yeni dinletme —</option>${dlJoinOpts(D).map(s => opt(s.id, dlLabel(s), "")).join("")}</select></label>` : ""}
-   ${vDlPages(D)}
+   <h4>Hangi sayfaları dinlettin?</h4>${vRangeSel("dl", D, D.d || TODAY)}
    <div class="grid2"><label>Tarih<input type="date" id="dl-d" value="${esc(D.d || TODAY)}" max="${TODAY}"></label><label>Ses / video kaydı<select id="dl-rec"><option value="">— yok —</option>${dlRecOpts(D).map(r => opt(r.id, recTitle(r) + " · " + trD(r.d), D.rec)).join("")}</select></label></div>
    <div class="grid3"><label>Süre (dk)<input type="number" id="dl-min" min="0" value="${esc(D.min)}" inputmode="numeric"></label><label>Kime dinlettin<input id="dl-who" list="dl-wl" value="${esc(D.who)}" placeholder="Hocam, Ahmet…" autocomplete="off"></label><label>Nasıl<select id="dl-how">${DLHOW.map(([v, l]) => opt(v, l, D.how)).join("")}</select></label></div><datalist id="dl-wl">${dlWhoList().map(w => `<option value="${esc(w)}">`).join("")}</datalist>
    <h4>Hatalar (${D.errs.length})</h4>${D.errs.map(errRow).join("") || `<p class="small muted">Hata yoksa doğrudan kaydet; bütün sayfalar <b>sağlam dinletildi</b> olur.</p>`}
@@ -2760,7 +2768,7 @@ function vDlToday(){
 function vDlList(n){
   const L = (S.dinlet || []).slice(0, n || 20); if (!L.length) return `<p class="small muted">Henüz dinletme kaydı yok. Bugün ekranındaki "+ Dinlettim" ile ekle.</p>`;
   return L.map(x => { const E = S.err.filter(e => x.errs.includes(e.id));
-    return `<details class="perr"><summary><span class="chip ${dlNum(x) ? "c-warn" : "c-ok"}">${dlNum(x) ? dlNum(x) + " hata" : "Hatasız"}</span>${x.bulk ? ` <span class="tiny muted">toplu</span>` : ""} <b>s. ${PR(x.f, x.t)}</b> <span class="small muted">${trD(x.d)} · ${esc(x.who || "—")}${x.how ? " · " + DLN[x.how] : ""}</span></summary>
+    return `<details class="perr"><summary><span class="chip ${dlNum(x) ? "c-warn" : "c-ok"}">${dlNum(x) ? dlNum(x) + " hata" : "Hatasız"}</span>${x.t > x.f ? ` <span class="chip c-none">Toplu · ${pgCount(range(x.f, x.t))} s.</span>` : ""}${x.bulk ? ` <span class="tiny muted">sayıyla</span>` : ""} <b>s. ${PR(x.f, x.t)}</b> <span class="small muted">${trD(x.d)} · ${esc(x.who || "—")}${x.how ? " · " + DLN[x.how] : ""}</span></summary>
      ${E.map(e => `<div class="small">${errDetail(e)}</div>`).join("")}${x.n ? `<div class="small gold">${esc(x.n)}</div>` : ""}<div class="row">${x.rec ? `<button class="small" data-recplay="${x.rec}">▶ Kaydı dinle</button>` : ""}<button class="ghost small" data-open="${x.f}">Sayfayı aç</button><button class="ghost small" data-dledit="${x.id}">Düzenle</button>${confirmBtn("dls:" + x.id, "Kaydı sil")}</div></details>`; }).join("");
 }
 
@@ -2989,7 +2997,7 @@ function pageCard(p){
   if (o.min && o.n) bits.push(`~${Math.max(1, Math.round(o.min / o.n))} dk/okuma`);
   bits.push(o.last ? (o.last === TODAY ? "bugün okundu" : diffD(o.last, TODAY) + " gün önce") : "okuma kaydı yok");
   if (open) bits.push(`<span class="danger">${open} açık hata</span>`);
-  return `<div class="pcard small"><span class="chip c-${pg.st || "none"}">${PST[pg.st || ""]}${fadeOf(p) ? " · soluk" : ""}</span> ${bits.join(" · ")}</div>`;
+  return `<div class="pcard small"><button class="ghost small pcdl" data-dlpage="${p}">+ Dinlettim</button><span class="chip c-${pg.st || "none"}">${PST[pg.st || ""]}${fadeOf(p) ? " · soluk" : ""}</span> ${bits.join(" · ")}</div>`;
 }
 const fadeOf = p => pst(p) === "ok" && pageRisk(p).r >= .8;
 
@@ -3212,7 +3220,7 @@ function vPagePick(L, key){
    <p class="small">${set.size ? `<b>${set.size}</b> sayfa: ${rangesOf(L).map(([x, y]) => `<button class="chip c-ok" data-pprm="${x}-${y}">s. ${PR(x, y)} ×</button>`).join(" ")}` : `<span class="muted">Sayfalara dokun ya da aralık yaz.</span>`}</p>`;
 }
 function csGo(d){ if (d === TODAY) { if (ui.tab !== "bugun") return go("bugun"); } else { ui.day = d; if (ui.tab !== "takvim") return go("takvim"); } render(); const el = $(".csform"); if (el) el.scrollIntoView({ block: "start" }); }
-function ppList(){ return ui.cs ? ui.cs.P : ui.hp ? ui.hp.P : ui.dl && ui.dl.pick ? ui.dl.P : null; }
+function ppList(){ return ui.cs ? ui.cs.P : ui.hp ? ui.hp.P : ui.rsT && ui.rsT.sm === "tek" ? ui.rsT.P : ui.dl && ui.dl.pick ? ui.dl.P : null; }
 function vCsForm(){
   const C = ui.cs;
   return `<div class="card csform"><div class="row between nowrap"><h3>${C.id ? "Çalışmayı düzenle" : "Çalıştım"}</h3><button class="ghost small" data-act="csclose">Kapat</button></div>
@@ -3318,6 +3326,7 @@ function vDlBulk(D){
    ${pre.length ? `<div class="chips dlpre">${pre.map((o, k) => `<button class="fchip" data-dbpre="${k}">+ ${esc(o.l)} <span class="muted">s. ${esc(o.txt)}</span></button>`).join("")}</div>` : ""}
    <div class="row nowrap ppr"><span class="small">Cüz</span><input type="number" id="db-j1" min="1" max="30" inputmode="numeric" placeholder="1"><span>–</span><input type="number" id="db-j2" min="1" max="30" inputmode="numeric" placeholder="5"><button class="small" data-act="dbjuz">Cüzleri ekle</button></div>
    <div class="row nowrap ppr"><span class="small">Sayfa</span><input type="number" id="db-f" min="0" max="603" inputmode="numeric" placeholder="s."><span>–</span><input type="number" id="db-t" min="0" max="603" inputmode="numeric" placeholder="s."><button class="small" data-act="dbrange">Satır ekle</button></div>
+   <div class="row nowrap ppr"><span class="small">Sure</span><select id="db-s">${S114.map(o => opt(o[0], o[1], "")).join("")}</select><button class="small" data-act="dbsure">Sure ekle</button></div>
    ${D.rows.length ? `<div class="dbrows"><div class="dbr dbhead"><span></span><span class="tiny muted">Hata</span><span class="tiny muted">Takılma</span><span></span></div>${D.rows.map((r, k) => { const j1 = juzOfPage(r.f), j2 = juzOfPage(r.t), whole = juzPages(j1)[0] === r.f && juzPages(j2)[1] === r.t;
       return `<div class="dbr ${r.h + r.tk ? "has" : ""}"><span class="small"><b>${whole ? (j1 === j2 ? j1 + ". cüz" : j1 + "–" + j2 + ". cüz") : "s. " + PR(r.f, r.t)}</b>${whole ? ` <span class="muted">s. ${PR(r.f, r.t)}</span>` : ""}</span>${step(k, "h", r.h)}${step(k, "tk", r.tk)}<button class="ghost small" data-dbrm="${k}" aria-label="Satırı sil">×</button></div>`; }).join("")}</div>
     <p class="tiny">${kendi ? "Kendi kendine tekrarlar okuma ve çalışma olarak işlenir; sayfaların sağlam/zayıf durumunu değiştirmez." : "Hatasız satırların sayfaları sağlam dinletildi olur. Hata/takılma girdiğin satırların sayfa durumu değişmez, cüz renginde ve hata sayısında görünür; ayrıntı istersen sonra tek kayıt olarak düzenleyebilirsin."}</p>` : `<p class="small muted">Yukarıdan cüz ya da sayfa aralığı ekle. Her satır ayrı bir ${kendi ? "tekrar" : "dinletme"}.</p>`}
@@ -3330,7 +3339,9 @@ function vDlBulk(D){
 function dlLabel(s){ return `s. ${PR(s.f, s.t)} · ${trD(s.d)}${s.who ? " · " + s.who : ""}${s.bulk ? " · toplu" : ""}`; }
 function recMoveRow(r){
   const linked = (S.dinlet || []).find(s => s.rec === r.id), near = (S.dinlet || []).filter(s => s.id === (linked && linked.id) || (s.f <= (r.p2 || r.p) && s.t >= r.p) || s.d === r.d).slice(0, 25);
-  return `<div class="recmv"><div class="grid3"><label>Sayfadan<input type="number" min="0" max="603" inputmode="numeric" data-recpg="${r.id}|p" value="${PN(r.p)}"></label><label>Sayfaya<input type="number" min="0" max="603" inputmode="numeric" data-recpg="${r.id}|p2" value="${PN(r.p2 || r.p)}"></label><label>Tarih<input type="date" data-recdt="${r.id}" value="${esc(r.d)}"></label></div>
+  ui.recMv = ui.recMv || {}; const X = ui.recMv[r.id] || (ui.recMv[r.id] = { P: range(r.p, r.p2 || r.p), d: r.d }), changed = X.P.length && (X.P[0] !== r.p || X.P[X.P.length - 1] !== (r.p2 || r.p));
+  return `<div class="recmv"><h4>Bu kayıt hangi sayfalar? <span class="small muted">şu an s. ${PR(r.p, r.p2 || r.p)}${(r.p2 || r.p) > r.p ? " · toplu" : ""}</span></h4>${vRangeSel("rec:" + r.id, X, r.d, true)}${changed ? `<button class="primary small" data-recmvapply="${r.id}">Sayfaları kaydet</button>` : ""}
+   <div class="grid2"><label>Tarih<input type="date" data-recdt="${r.id}" value="${esc(r.d)}"></label><span></span></div>
    <label>Bağlı dinletme<select data-reclink="${r.id}"><option value="">— bağlı değil —</option>${near.map(s => opt(s.id, dlLabel(s), linked && linked.id)).join("")}</select></label>
    <p class="tiny">Yanlış sayfaya düştüyse sayfa numarasını değiştir; kayıt o sayfanın ses kayıtlarına taşınır. Bir dinletmeye bağlarsan dinletme listesinde "▶ Kaydı dinle" çıkar.</p></div>`;
 }
@@ -3338,6 +3349,49 @@ function dlJoinOpts(D){ const from = addDays(TODAY, -14); return (S.dinlet || []
 function dlRecOpts(D){ const P = D.P || []; if (RECS === null) { RECS = []; recList().then(l => { RECS = recMerge(l); render(); }); }
   const lo = P.length ? P[0] : D.f, hi = P.length ? P[P.length - 1] : D.t;
   return (RECS || []).filter(r => r.id === D.rec || (r.p <= hi && (r.p2 || r.p) >= lo) || r.d === (D.d || TODAY)).slice(0, 25); }
+/* ===== Ortak sayfa seçici: sayfa / aralık / cüz / sure / hedef / tek tek ===== */
+const RSM = [["sayfa", "Sayfa"], ["aralik", "Aralık"], ["cuz", "Cüz"], ["sure", "Sure"], ["hedef", "Hedef"], ["tek", "Tek tek"]];
+function rsObj(key){ if (key === "dl") return ui.dl; if (key.startsWith("rec:")) { const id = key.slice(4); ui.recMv = ui.recMv || {}; return ui.recMv[id]; } return null; }
+function rsGuess(P){ if (!P || !P.length) return "hedef"; if (P.length === 1) return "sayfa"; const R = rangesOf(P); if (R.length > 1) return "tek";
+  const j1 = juzOfPage(P[0]), j2 = juzOfPage(P[P.length - 1]); if (juzPages(j1)[0] === P[0] && juzPages(j2)[1] === P[P.length - 1]) return "cuz"; return "aralik"; }
+function rsPresets(d){
+  const out = [], H = hedefOf(d), add = (l, L) => { if (L.length && !out.some(o => o.L.join() === L.join())) out.push({ l, L, txt: rangeTxt(rangesOf(L)) }); };
+  if (H.length) { add("Hedefin hepsi", H); const fN = n => { let k = 0; while (k < H.length && pgCount(H.slice(0, k + 1)) <= n) k++; return H.slice(0, k); }, lN = n => { let k = 0; while (k < H.length && pgCount(H.slice(H.length - k - 1)) <= n) k++; return H.slice(H.length - k); }, hn = pgCount(H);
+    if (hn > 5) { add("İlk 5", fN(5)); add("Son 5", lN(5)); } if (hn > 10) { add("İlk 10", fN(10)); add("Son 10", lN(10)); }
+    if (rangesOf(H).length > 1) rangesOf(H).forEach(([a, b]) => add("s. " + PR(a, b), range(a, b))); }
+  dlPresets(d).forEach(o => add(o.l, o.L));
+  return out;
+}
+function rsSet(X, L, addMode, contig){ let P = addMode ? [...new Set((X.P || []).concat(L))] : [...new Set(L)]; P.sort((a, b) => a - b); if (contig && P.length) P = range(P[0], P[P.length - 1]); X.P = P; }
+function vRangeSel(key, X, d, contig){
+  const P = X.P || (X.P = []), m = X.sm || (X.sm = rsGuess(P)), set = new Set(P), k = esc(key), rid = key.replace(/[^a-z0-9]/gi, "");
+  let body = "";
+  if (m === "sayfa") body = `<div class="row nowrap ppr"><input type="number" id="rs-${rid}-p" min="0" max="603" inputmode="numeric" value="${P.length ? PN(P[0]) : ""}" placeholder="s."><button class="small" data-rsact="${k}|sayfa">Bu sayfa</button>${contig ? "" : `<button class="ghost small" data-rsact="${k}|sayfa+">Ekle</button>`}</div>`;
+  else if (m === "aralik") body = `<div class="row nowrap ppr"><input type="number" id="rs-${rid}-f" min="0" max="603" inputmode="numeric" value="${P.length ? PN(P[0]) : ""}" placeholder="s."><span>–</span><input type="number" id="rs-${rid}-t" min="0" max="603" inputmode="numeric" value="${P.length ? PN(P[P.length - 1]) : ""}" placeholder="s."><button class="small" data-rsact="${k}|aralik">Bu aralık</button>${contig ? "" : `<button class="ghost small" data-rsact="${k}|aralik+">Ekle</button>`}</div>`;
+  else if (m === "cuz") body = `<div class="rsj">${J30.map(([j]) => { const [a, b] = juzPages(j); let all = true, any = false; for (let p = a; p <= b; p++) { if (set.has(p)) any = true; else all = false; } return `<button class="rsjc ${all ? "on" : any ? "part" : ""}" data-rsj="${k}|${j}">${j}</button>`; }).join("")}</div><p class="tiny">Cüze dokun: ekle / çıkar.${contig ? " Kayıt tek parça olduğu için uçlar arası alınır." : ""}</p>`;
+  else if (m === "sure") { const s0 = +(X.rsS || ref(pStart(P[0] || ui.page || 1))[0]), s1 = +(X.rsS2 || s0);
+    body = `<div class="grid2"><label>Sureden<select id="rs-${rid}-s">${S114.map(o => opt(o[0], o[1], s0)).join("")}</select></label><label>Sureye<select id="rs-${rid}-s2">${S114.map(o => opt(o[0], o[1], s1)).join("")}</select></label></div>
+     <div class="row"><button class="small" data-rsact="${k}|sure">Bu sure(ler)</button>${contig ? "" : `<button class="ghost small" data-rsact="${k}|sure+">Ekle</button>`}<span class="tiny muted">s. ${PR(surahPages(Math.min(s0, s1))[0], surahPages(Math.max(s0, s1))[1])}</span></div>`; }
+  else if (m === "hedef") { const pre = rsPresets(d); body = pre.length ? `<div class="chips dlpre">${pre.map((o, i) => { const on = o.L.length === P.length && o.L.every(p => set.has(p)), inn = !on && o.L.every(p => set.has(p)); return `<span class="rsp"><button class="fchip ${on ? "on" : ""}" data-rspre="${k}|${i}">${esc(o.l)} <span class="muted">s. ${esc(o.txt)}</span></button>${contig ? "" : `<button class="rspa ${inn ? "on" : ""}" data-rspre="${k}|${i}|+" aria-label="Seçime ekle">${inn ? "✓" : "+"}</button>`}</span>`; }).join("")}</div><p class="tiny">Dokun: sadece onu seç · <b>+</b> : seçime ekle (ör. bugünkü sayfalar + dünkü cüz).</p>` : `<p class="small muted">Bu gün için hedef ya da çalışma yok. Sayfa, aralık, cüz ya da sure ile seç.</p>`; }
+  else if (m === "tek") { ui.rsT = X; body = vPagePick(P); }
+  const R = rangesOf(P), n = pgCount(P);
+  return `<div class="rsel"><div class="rsm">${RSM.map(([v, l]) => `<button class="${m === v ? "on" : ""}" data-rsm="${k}|${v}">${l}</button>`).join("")}</div>${body}
+   <p class="small dlsel">${P.length ? `<b>${n} sayfa${n > 1 ? " · toplu" : ""}:</b> ${R.map(([a, b]) => `<button class="chip c-ok" data-rsrm="${k}|${a}-${b}">s. ${PR(a, b)} ×</button>`).join(" ")}` : `<span class="danger">Sayfa seçilmedi</span>`}</p></div>`;
+}
+function rsHandle(a){
+  const pick = s => { const [key, v] = s.split("|"); return [key, v, rsObj(key)]; };
+  if (a.rsm) { const [, v, X] = pick(a.rsm); if (X) X.sm = v; ui.ppJ = null; return true; }
+  if (a.rsrm) { const [, v, X] = pick(a.rsrm); if (X) { const [f, t] = v.split("-").map(Number); X.P = X.P.filter(q => q < f || q > t); } return true; }
+  if (a.rsj) { const [key, v, X] = pick(a.rsj); if (X) { const [f, t] = juzPages(+v), L = range(f, t), all = L.every(p => X.P.includes(p)); if (all) X.P = X.P.filter(p => p < f || p > t); else rsSet(X, L, true, key.startsWith("rec:")); } return true; }
+  if (a.rspre) { const [key, v, X] = pick(a.rspre), plus = a.rspre.endsWith("|+"); if (X) { const o = rsPresets(X.d || TODAY)[+v]; if (o) { if (plus) { const all = o.L.every(p => X.P.includes(p)); if (all) X.P = X.P.filter(p => !o.L.includes(p)); else rsSet(X, o.L, true, false); } else rsSet(X, o.L, false, key.startsWith("rec:")); } } return true; }
+  if (a.rsact) { const [key, op, X] = pick(a.rsact); if (!X) return true; const rid = key.replace(/[^a-z0-9]/gi, ""), g = s => ($("#rs-" + rid + "-" + s) || {}).value, add = op.endsWith("+"), c = key.startsWith("rec:"), base = op.replace("+", "");
+    if (base === "sayfa") { const p = PI(g("p")); if (!p) { toast("Sayfa numarası yaz"); return true; } rsSet(X, [Math.min(604, p)], add, c); }
+    if (base === "aralik") { const f = PI(g("f")), t = PI(g("t")) || f; if (!f) { toast("Sayfa numarası yaz"); return true; } rsSet(X, range(Math.max(1, Math.min(f, t)), Math.min(604, Math.max(f, t))), add, c); }
+    if (base === "sure") { const s0 = +g("s"), s1 = +g("s2") || s0; X.rsS = s0; X.rsS2 = s1; rsSet(X, range(surahPages(Math.min(s0, s1))[0], surahPages(Math.max(s0, s1))[1]), add, c); }
+    return true; }
+  return false;
+}
+
 /* ===== Kişisel ezber analizi ===== */
 function vAnaliz(){
   const E = S.err; if (!E.length && !S.quiz.length) return `<div class="card"><p class="empty">Analiz için önce hata kaydı ya da sınama sonucu gerekiyor. Dinletmede yakaladığın hataları Mushaf'ta ayete dokunup "Hata ekle" ile gir.</p></div>`;
@@ -3950,6 +4004,9 @@ document.addEventListener("click", e => {
   if (a.dbrm != null && ui.dl) { ui.dl.rows.splice(+a.dbrm, 1); return render(); }
   if (a.dbpre != null && ui.dl) { const o = dlPresets(ui.dl.d || TODAY)[+a.dbpre]; if (o) { const L = o.L; const js = [...new Set(L.map(juzOfPage))]; const whole = js.every(j => { const [x, y] = juzPages(j); for (let p = x; p <= y; p++) if (!L.includes(p)) return false; return true; });
       if (whole && js.length > 1) js.forEach(j => dlBulkAddRange(ui.dl, ...juzPages(j))); else rangesOf(L).forEach(([x, y]) => dlBulkAddRange(ui.dl, x, y)); } return render(); }
+  if ((a.rsm || a.rsrm || a.rsj || a.rspre || a.rsact) && rsHandle(a)) return render();
+  if (a.recmvapply) { const id = a.recmvapply, X = (ui.recMv || {})[id]; if (!X || !X.P.length) { toast("Sayfa seç"); return; } const f = X.P[0], t = X.P[X.P.length - 1]; recUpdate(id, r => { r.p = f; r.p2 = t; }).then(() => { toast("Kayıt s. " + PR(f, t) + (t > f ? " (toplu, " + pgCount(range(f, t)) + " sayfa)" : "") + " olarak güncellendi"); delete ui.recMv[id]; render(); }); return; }
+  if (a.dlpage) { const p = +a.dlpage; dlOpen(p, p); ui.dl.d = TODAY; ui.dl.sm = "sayfa"; ui.dlMode = "tek"; if (ui.tab !== "bugun") return go("bugun"); return render(); }
   if (a.rdtog) { const p = +a.rdtog, d = ui.tab === "bugun" ? TODAY : ui.day, x = dayRec(d); x.read = x.read || []; if (x.read.includes(p)) x.read = x.read.filter(q => q !== p); else { x.read.push(p); syncParts(d); } ui.spickOpen = true; ui.lrDirty = true; markDay(d); return render(); }
   if (a.rdrm) { const [f2, t2] = a.rdrm.split("-").map(Number), d = ui.tab === "bugun" ? TODAY : ui.day, x = S.days[d]; if (x && x.read) { x.read = x.read.filter(q => q < f2 || q > t2); markDay(d); } return render(); }
   if (a.erredit) { ui.errEdit = a.erredit; ui.errEditP = null; ui.errDraft = null; return render(); }
@@ -4052,6 +4109,7 @@ document.addEventListener("click", e => {
     dlclose(){ ui.dl = null; ui.dlMode = "tek"; },
     dlrange(){ const D = ui.dl; if (!D) return; const f = PI(($("#dl-f") || {}).value), t = PI(($("#dl-t") || {}).value) || f; if (!f) { toast("Sayfa numarası yaz"); return true; } for (let p = Math.max(1, Math.min(f, t)); p <= Math.min(604, Math.max(f, t)); p++) if (!D.P.includes(p)) D.P.push(p); D.P.sort((x, y) => x - y); },
     dbjuz(){ const D = ui.dl; if (!D) return; const j1 = +(($("#db-j1") || {}).value), j2 = +(($("#db-j2") || {}).value) || j1; if (!(j1 >= 1 && j1 <= 30)) { toast("Cüz numarası yaz (1–30)"); return true; } for (let j = Math.min(j1, j2); j <= Math.min(30, Math.max(j1, j2)); j++) dlBulkAddRange(D, ...juzPages(j)); },
+    dbsure(){ const D = ui.dl; if (!D) return; const s = +(($("#db-s") || {}).value) || 1, [f, t] = surahPages(s); dlBulkAddRange(D, f, t); },
     dbrange(){ const D = ui.dl; if (!D) return; const f = PI(($("#db-f") || {}).value), t = PI(($("#db-t") || {}).value) || f; if (!f) { toast("Sayfa numarası yaz"); return true; } dlBulkAddRange(D, f, t); },
     dbsave(){ const D = ui.dl; if (!D) return; D.min = ($("#dl-min") || {}).value ?? D.min; if ($("#dl-who")) D.who = $("#dl-who").value; if ($("#dl-how")) D.how = $("#dl-how").value; if ($("#dl-n")) D.n = $("#dl-n").value;
       if (!D.rows.length) { toast("Önce satır ekle"); return true; }
